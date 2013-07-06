@@ -1,0 +1,32 @@
+[
+	{
+		"name": "PicklesCrawler",
+		"author": "tomk79",
+		"description":"ウェブ巡回収集ツール。",
+		"url":"http://pickles.pxt.jp/manual/themes/",
+		"versions":[
+			{
+				"type": "zip",
+				"md5_hash": "yyyyyyyyyyyyyyyyyyyyyyyyyy",
+				"url": "http://pickles.pxt.jp/aaaaa/PxPlugin_PicklesCrawler-1.0.0b6.zip",
+				"version": "1.0.0b6",
+				"update_date": "2013-07-07"
+			}
+		]
+	} ,
+	{
+		"name": "asazuke",
+		"author": "tomk79",
+		"description":"取り込みツール。Pickles Crawler と一緒に使うと吉。",
+		"url":"http://pickles.pxt.jp/manual/themes/",
+		"versions":[
+			{
+				"type": "zip",
+				"md5_hash": "xxxxxxxxxxxxxxxxxxxxxxxxxxx",
+				"url": "http://pickles.pxt.jp/bbbbbb/PxPlugin_asazuke-1.0.0b6.zip",
+				"version": "1.0.0b6",
+				"update_date": "2013-07-07"
+			}
+		]
+	}
+]
