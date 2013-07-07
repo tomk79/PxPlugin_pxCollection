@@ -1,10 +1,39 @@
 [
 	{
 		"name":"default",
-		"author":"tomk79"
+		"author":"@tomk79",
+		"description":"Pickles Framework に同梱されている default テーマ。",
+		"type": "zip",
+		"md5_hash": "yyyyyyyyyyyyyyyyyyyyyyyyyy",
+		"url": "http://pickles.pxt.jp/aaaaa/PxPlugin_PicklesCrawler-1.0.0b6.zip",
+		"thumb": "data:base64",
+		"images":[
+			"data:base64",
+			"data:base64",
+			"data:base64"
+		],
+		"version": "1.0.0b6",
+		"update_date": "2013-07-07",
+		"flags":{
+			"main_color": "white",
+			"pains": 2 
+		}
 	},
 	{
 		"name":"sample",
-		"author":"tomk79"
+		"author":"@tomk79",
+		"description":"Pickles Framework に同梱されている sample テーマ。",
+		"type": "zip",
+		"md5_hash": "yyyyyyyyyyyyyyyyyyyyyyyyyy",
+		"url": "http://pickles.pxt.jp/aaaaa/PxPlugin_PicklesCrawler-1.0.0b6.zip",
+		"thumb": "data:base64",
+		"images":[
+		],
+		"version": "1.0.0b6",
+		"update_date": "2013-07-07",
+		"flags":{
+			"main_color": "gray",
+			"pains": 2 
+		}
 	}
 ]

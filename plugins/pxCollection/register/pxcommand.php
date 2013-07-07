@@ -36,11 +36,17 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 		if(!count($list)){
 			$src .= '<p>nothing.</p>'."\n";
 		}else{
+			$src .= '<dl>'."\n";
 			foreach($list as $row){
-				ob_start();
-				test::var_dump($row);
-				$src .= ob_get_clean();
+				$src .= '<dt>'.t::h($row->name).'</dt>'."\n";
+				$src .= '<dd>author: '.t::h($row->author).'</dd>'."\n";
+				$src .= '<dd>'.t::h($row->description).'</dd>'."\n";
+				$src .= '<dd><a href="'.t::h($row->url).'" target="_blank">more...</a></dd>'."\n";
+				$src .= '<dd>version: <strong>'.t::h($row->version).'</strong></dd>'."\n";
+				$src .= '<dd>md5: '.t::h($row->md5_hash).'</dd>'."\n";
+				$src .= '<dd>url: '.t::h($row->url).'</dd>'."\n";
 			}
+			$src .= '</dl>'."\n";
 		}
 		$src .= '</div>'."\n";
 
@@ -72,11 +78,19 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 		if(!count($list)){
 			$src .= '<p>nothing.</p>'."\n";
 		}else{
+			$src .= '<dl>'."\n";
 			foreach($list as $row){
-				ob_start();
-				test::var_dump($row);
-				$src .= ob_get_clean();
+				$src .= '<dt>'.t::h($row->name).'</dt>'."\n";
+				$src .= '<dd>author: '.t::h($row->author).'</dd>'."\n";
+				$src .= '<dd>'.t::h($row->description).'</dd>'."\n";
+				$src .= '<dd><a href="'.t::h($row->url).'" target="_blank">more...</a></dd>'."\n";
+				foreach($row->versions as $row_version){
+					$src .= '<dd>version: <strong>'.t::h($row_version->version).'</strong></dd>'."\n";
+					$src .= '<dd>md5: '.t::h($row_version->md5_hash).'</dd>'."\n";
+					$src .= '<dd>url: '.t::h($row_version->url).'</dd>'."\n";
+				}
 			}
+			$src .= '</dl>'."\n";
 		}
 		$src .= '</div>'."\n";
 

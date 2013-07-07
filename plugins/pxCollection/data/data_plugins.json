@@ -1,9 +1,10 @@
 [
 	{
 		"name": "PicklesCrawler",
-		"author": "tomk79",
+		"author": "@tomk79",
 		"description":"ウェブ巡回収集ツール。",
 		"url":"http://pickles.pxt.jp/manual/themes/",
+		"thumb":"data:base64",
 		"versions":[
 			{
 				"type": "zip",
@@ -16,9 +17,10 @@
 	} ,
 	{
 		"name": "asazuke",
-		"author": "tomk79",
+		"author": "@tomk79",
 		"description":"取り込みツール。Pickles Crawler と一緒に使うと吉。",
 		"url":"http://pickles.pxt.jp/manual/themes/",
+		"thumb":"data:base64",
 		"versions":[
 			{
 				"type": "zip",
