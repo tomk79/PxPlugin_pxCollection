@@ -19,33 +19,41 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 		if( strlen( $command[2] ) && strlen( $command[3] ) ){
 			if( $command[4] == 'install' ){
 				// インストール
-				return $this->start_install( $command[2], $command[3] );
+				print $this->html_template( $this->start_install( $command[2], $command[3] ) );
+				exit;
 			}elseif( $command[4] == 'uninstall' ){
 				// アンインストール
-				return $this->start_uninstall( $command[2], $command[3] );
+				print $this->html_template( $this->start_uninstall( $command[2], $command[3] ) );
+				exit;
 			}elseif( $command[4] == 'update' ){
 				// アップデート
-				return $this->start_update( $command[2], $command[3] );
+				print $this->html_template( $this->start_update( $command[2], $command[3] ) );
+				exit;
 			}
 
 			// 詳細ページ
-			return $this->page_detail( $command[2], $command[3] );
+			print $this->html_template( $this->page_detail( $command[2], $command[3] ) );
+			exit;
 
 		}elseif( $command[2] == 'themes' ){
 			// テーマの一覧ページ
-			return $this->page_list_themes();
+			print $this->html_template( $this->page_list_themes() );
+			exit;
 
 		}elseif( $command[2] == 'plugins' ){
 			// プラグインの一覧ページ
-			return $this->page_list_plugins();
+			print $this->html_template( $this->page_list_plugins() );
+			exit;
 
 		}elseif( $command[2] == 'contents' ){
 			// コンテンツの一覧ページ
-			return $this->page_list_contents();
+			print $this->html_template( $this->page_list_contents() );
+			exit;
 
 		}
 
-		$this->homepage();
+		print $this->html_template( $this->homepage() );
+		exit;
 	}
 
 	/**
@@ -144,9 +152,7 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 		$src .= '</div><!-- /.more_links -->'."\n";
 		$src .= ''."\n";
 
-
-		print $this->html_template($src);
-		exit;
+		return $src;
 	}// homepage()
 
 
@@ -341,36 +347,394 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 	}
 
 
+	// -----------------------------------------------------------------------------------------
+
 	/**
-	 * アイテムをインストールする
+	 * アイテムのインストール
 	 */
-	private function start_install( $category, $item_name ){
-		$src = '';
-		$src .= '<p>この機能 &quot;'.implode('.',$this->get_command()).'&quot; は、開発中です。</p>'."\n";
-		print $this->html_template($src);
-		exit;
+	private function start_install(){
+		$error = $this->check_install_check();
+		if( $this->px->req()->get_param('mode') == 'thanks' ){
+			return	$this->page_install_thanks();
+		}elseif( $this->px->req()->get_param('mode') == 'confirm' && !count( $error ) ){
+			return	$this->page_install_confirm();
+		}elseif( $this->px->req()->get_param('mode') == 'execute' && !count( $error ) ){
+			return	$this->execute_install_execute();
+		}elseif( !strlen( $this->px->req()->get_param('mode') ) ){
+			$error = array();
+			// $this->px->req()->set_param( 'send_form_flg' , intval( $project_model->get_send_form_flg() ) );
+		}
+		return	$this->page_install_input( $error );
+	}
+	/**
+	 * アイテムのインストール：入力
+	 */
+	private function page_install_input( $error ){
+		$RTN = ''."\n";
+
+		$RTN .= '<p>'."\n";
+		$RTN .= '	プロジェクトの情報を入力して、「確認する」ボタンをクリックしてください。<span class="must">必須</span>印の項目は必ず入力してください。<br />'."\n";
+		$RTN .= '</p>'."\n";
+		if( is_array( $error ) && count( $error ) ){
+			$RTN .= '<p class="error">'."\n";
+			$RTN .= '	入力エラーを検出しました。画面の指示に従って修正してください。<br />'."\n";
+			$RTN .= '</p>'."\n";
+		}
+		$RTN .= '<form action="'.htmlspecialchars( $this->href() ).'" method="post" class="inline">'."\n";
+		$RTN .= '<table style="width:100%;" class="form_elements">'."\n";
+		$RTN .= '	<tr>'."\n";
+		$RTN .= '		<th style="width:30%;"><div>プロジェクト名 <span class="must">必須</span></div></th>'."\n";
+		$RTN .= '		<td style="width:70%;">'."\n";
+		$RTN .= '			<div><input type="text" name="project_name" value="'.htmlspecialchars( $this->px->req()->get_param('project_name') ).'" style="width:80%;" /></div>'."\n";
+		if( strlen( $error['project_name'] ) ){
+			$RTN .= '			<div class="error">'.$error['project_name'].'</div>'."\n";
+		}
+		$RTN .= '		</td>'."\n";
+		$RTN .= '	</tr>'."\n";
+		$RTN .= '</table>'."\n";
+		$RTN .= '	<div class="center"><input type="submit" value="確認する" /></div>'."\n";
+		$RTN .= '	<input type="hidden" name="mode" value="confirm" />'."\n";
+		$RTN .= '</form>'."\n";
+		return	$RTN;
+	}
+	/**
+	 * アイテムのインストール：確認
+	 */
+	private function page_install_confirm(){
+		$command = $this->get_command();
+		$RTN = ''."\n";
+		$HIDDEN = ''."\n";
+
+		$RTN .= '<p>'."\n";
+		$RTN .= '	入力した内容を確認してください。<br />'."\n";
+		$RTN .= '</p>'."\n";
+
+		$RTN .= '<table style="width:100%;" class="form_elements">'."\n";
+		$RTN .= '	<tr>'."\n";
+		$RTN .= '		<th style="width:30%;"><div>プロジェクト名</div></th>'."\n";
+		$RTN .= '		<td style="width:70%;">'."\n";
+		$RTN .= '			<div>'.htmlspecialchars( $this->px->req()->get_param('project_name') ).'</div>'."\n";
+		$HIDDEN .= '<input type="hidden" name="project_name" value="'.htmlspecialchars( $this->px->req()->get_param('project_name') ).'" />';
+		$RTN .= '		</td>'."\n";
+		$RTN .= '	</tr>'."\n";
+		$RTN .= '</table>'."\n";
+
+		$RTN .= '<div class="unit">'."\n";
+		$RTN .= '<div class="center">'."\n";
+		$RTN .= '<form action="'.htmlspecialchars( $this->href() ).'" method="post" class="inline">'."\n";
+		$RTN .= '	<input type="hidden" name="mode" value="execute" />'."\n";
+		$RTN .= $HIDDEN;
+		$RTN .= '	'.''."\n";
+		$RTN .= '	<input type="submit" value="インストールする" />'."\n";
+		$RTN .= '</form>'."\n";
+		$RTN .= '<form action="'.htmlspecialchars( $this->href() ).'" method="post" class="inline">'."\n";
+		$RTN .= '	<input type="hidden" name="mode" value="input" />'."\n";
+		$RTN .= $HIDDEN;
+		$RTN .= '	'.''."\n";
+		$RTN .= '	<input type="submit" value="訂正する" />'."\n";
+		$RTN .= '</form>'."\n";
+		$RTN .= '</div>'."\n";
+		$RTN .= '</div>'."\n";
+		$RTN .= '<hr />'."\n";
+		$RTN .= '<div class="unit">'."\n";
+		$RTN .= '<form action="'.htmlspecialchars( $this->href(':'.$command[2].'.'.$command[3]) ).'" method="post" class="inline">'."\n";
+		$RTN .= '	<div class="center"><input type="submit" value="キャンセル" /></div>'."\n";
+		$RTN .= '</form>'."\n";
+		$RTN .= '</div>'."\n";
+		return	$RTN;
+	}
+	/**
+	 * アイテムのインストール：チェック
+	 */
+	private function check_install_check(){
+		$RTN = array();
+		if( !strlen( $this->px->req()->get_param('project_name') ) ){
+			$RTN['project_name'] = 'プロジェクト名は必須項目です。';
+		}elseif( preg_match( '/\r\n|\r|\n/' , $this->px->req()->get_param('project_name') ) ){
+			$RTN['project_name'] = 'プロジェクト名に改行を含めることはできません。';
+		}elseif( strlen( $this->px->req()->get_param('project_name') ) > 256 ){
+			$RTN['project_name'] = 'プロジェクト名が長すぎます。';
+		}
+		return	$RTN;
+	}
+	/**
+	 * アイテムのインストール：実行
+	 */
+	private function execute_install_execute(){
+
+		return $this->px->redirect( $this->href().'&mode=thanks' );
+	}
+	/**
+	 * アイテムのインストール：完了
+	 */
+	private function page_install_thanks(){
+		$command = $this->get_command();
+		$RTN = ''."\n";
+		$RTN .= '<p>アイテムのインストールを完了しました。</p>'."\n";
+		$RTN .= '<form action="'.htmlspecialchars( $this->href( ':'.$command[2].'.'.$command[3] ) ).'" method="post" class="inline">'."\n";
+		$RTN .= '	<p><input type="submit" value="戻る" /></p>'."\n";
+		$RTN .= '</form>'."\n";
+		return	$RTN;
 	}
 
+	// -----------------------------------------------------------------------------------------
 
 	/**
-	 * アイテムをアンインストールする
+	 * アイテムのアンインストール
 	 */
-	private function start_uninstall( $category, $item_name ){
-		$src = '';
-		$src .= '<p>この機能 &quot;'.implode('.',$this->get_command()).'&quot; は、開発中です。</p>'."\n";
-		print $this->html_template($src);
-		exit;
+	private function start_uninstall(){
+		$error = $this->check_uninstall_check();
+		if( $this->px->req()->get_param('mode') == 'thanks' ){
+			return	$this->page_uninstall_thanks();
+		}elseif( $this->px->req()->get_param('mode') == 'confirm' && !count( $error ) ){
+			return	$this->page_uninstall_confirm();
+		}elseif( $this->px->req()->get_param('mode') == 'execute' && !count( $error ) ){
+			return	$this->execute_uninstall_execute();
+		}elseif( !strlen( $this->px->req()->get_param('mode') ) ){
+			$error = array();
+			// $this->px->req()->set_param( 'send_form_flg' , intval( $project_model->get_send_form_flg() ) );
+		}
+		return	$this->page_uninstall_input( $error );
+	}
+	/**
+	 * アイテムのアンインストール：入力
+	 */
+	private function page_uninstall_input( $error ){
+		$RTN = ''."\n";
+
+		$RTN .= '<p>'."\n";
+		$RTN .= '	プロジェクトの情報を入力して、「確認する」ボタンをクリックしてください。<span class="must">必須</span>印の項目は必ず入力してください。<br />'."\n";
+		$RTN .= '</p>'."\n";
+		if( is_array( $error ) && count( $error ) ){
+			$RTN .= '<p class="error">'."\n";
+			$RTN .= '	入力エラーを検出しました。画面の指示に従って修正してください。<br />'."\n";
+			$RTN .= '</p>'."\n";
+		}
+		$RTN .= '<form action="'.htmlspecialchars( $this->href() ).'" method="post" class="inline">'."\n";
+		$RTN .= '<table style="width:100%;" class="form_elements">'."\n";
+		$RTN .= '	<tr>'."\n";
+		$RTN .= '		<th style="width:30%;"><div>プロジェクト名 <span class="must">必須</span></div></th>'."\n";
+		$RTN .= '		<td style="width:70%;">'."\n";
+		$RTN .= '			<div><input type="text" name="project_name" value="'.htmlspecialchars( $this->px->req()->get_param('project_name') ).'" style="width:80%;" /></div>'."\n";
+		if( strlen( $error['project_name'] ) ){
+			$RTN .= '			<div class="error">'.$error['project_name'].'</div>'."\n";
+		}
+		$RTN .= '		</td>'."\n";
+		$RTN .= '	</tr>'."\n";
+		$RTN .= '</table>'."\n";
+		$RTN .= '	<div class="center"><input type="submit" value="確認する" /></div>'."\n";
+		$RTN .= '	<input type="hidden" name="mode" value="confirm" />'."\n";
+		$RTN .= '</form>'."\n";
+		return	$RTN;
+	}
+	/**
+	 * アイテムのアンインストール：確認
+	 */
+	private function page_uninstall_confirm(){
+		$command = $this->get_command();
+		$RTN = ''."\n";
+		$HIDDEN = ''."\n";
+
+		$RTN .= '<p>'."\n";
+		$RTN .= '	入力した内容を確認してください。<br />'."\n";
+		$RTN .= '</p>'."\n";
+
+		$RTN .= '<table style="width:100%;" class="form_elements">'."\n";
+		$RTN .= '	<tr>'."\n";
+		$RTN .= '		<th style="width:30%;"><div>プロジェクト名</div></th>'."\n";
+		$RTN .= '		<td style="width:70%;">'."\n";
+		$RTN .= '			<div>'.htmlspecialchars( $this->px->req()->get_param('project_name') ).'</div>'."\n";
+		$HIDDEN .= '<input type="hidden" name="project_name" value="'.htmlspecialchars( $this->px->req()->get_param('project_name') ).'" />';
+		$RTN .= '		</td>'."\n";
+		$RTN .= '	</tr>'."\n";
+		$RTN .= '</table>'."\n";
+
+		$RTN .= '<div class="unit">'."\n";
+		$RTN .= '<div class="center">'."\n";
+		$RTN .= '<form action="'.htmlspecialchars( $this->href() ).'" method="post" class="inline">'."\n";
+		$RTN .= '	<input type="hidden" name="mode" value="execute" />'."\n";
+		$RTN .= $HIDDEN;
+		$RTN .= '	'.''."\n";
+		$RTN .= '	<input type="submit" value="アンインストールする" />'."\n";
+		$RTN .= '</form>'."\n";
+		$RTN .= '<form action="'.htmlspecialchars( $this->href() ).'" method="post" class="inline">'."\n";
+		$RTN .= '	<input type="hidden" name="mode" value="input" />'."\n";
+		$RTN .= $HIDDEN;
+		$RTN .= '	'.''."\n";
+		$RTN .= '	<input type="submit" value="訂正する" />'."\n";
+		$RTN .= '</form>'."\n";
+		$RTN .= '</div>'."\n";
+		$RTN .= '</div>'."\n";
+		$RTN .= '<hr />'."\n";
+		$RTN .= '<div class="unit">'."\n";
+		$RTN .= '<form action="'.htmlspecialchars( $this->href(':'.$command[2].'.'.$command[3]) ).'" method="post" class="inline">'."\n";
+		$RTN .= '	<div class="center"><input type="submit" value="キャンセル" /></div>'."\n";
+		$RTN .= '</form>'."\n";
+		$RTN .= '</div>'."\n";
+		return	$RTN;
+	}
+	/**
+	 * アイテムのアンインストール：チェック
+	 */
+	private function check_uninstall_check(){
+		$RTN = array();
+		if( !strlen( $this->px->req()->get_param('project_name') ) ){
+			$RTN['project_name'] = 'プロジェクト名は必須項目です。';
+		}elseif( preg_match( '/\r\n|\r|\n/' , $this->px->req()->get_param('project_name') ) ){
+			$RTN['project_name'] = 'プロジェクト名に改行を含めることはできません。';
+		}elseif( strlen( $this->px->req()->get_param('project_name') ) > 256 ){
+			$RTN['project_name'] = 'プロジェクト名が長すぎます。';
+		}
+		return	$RTN;
+	}
+	/**
+	 * アイテムのアンインストール：実行
+	 */
+	private function execute_uninstall_execute(){
+
+		return $this->px->redirect( $this->href().'&mode=thanks' );
+	}
+	/**
+	 * アイテムのアンインストール：完了
+	 */
+	private function page_uninstall_thanks(){
+		$command = $this->get_command();
+		$RTN = ''."\n";
+		$RTN .= '<p>アイテムのアンインストールを完了しました。</p>'."\n";
+		$RTN .= '<form action="'.htmlspecialchars( $this->href( ':'.$command[2].'.'.$command[3] ) ).'" method="post" class="inline">'."\n";
+		$RTN .= '	<p><input type="submit" value="戻る" /></p>'."\n";
+		$RTN .= '</form>'."\n";
+		return	$RTN;
 	}
 
+	// -----------------------------------------------------------------------------------------
 
 	/**
-	 * アイテムをアップデートする
+	 * アイテムのアップデート
 	 */
-	private function start_update( $category, $item_name ){
-		$src = '';
-		$src .= '<p>この機能 &quot;'.implode('.',$this->get_command()).'&quot; は、開発中です。</p>'."\n";
-		print $this->html_template($src);
-		exit;
+	private function start_update(){
+		$error = $this->check_update_check();
+		if( $this->px->req()->get_param('mode') == 'thanks' ){
+			return	$this->page_update_thanks();
+		}elseif( $this->px->req()->get_param('mode') == 'confirm' && !count( $error ) ){
+			return	$this->page_update_confirm();
+		}elseif( $this->px->req()->get_param('mode') == 'execute' && !count( $error ) ){
+			return	$this->execute_update_execute();
+		}elseif( !strlen( $this->px->req()->get_param('mode') ) ){
+			$error = array();
+			// $this->px->req()->set_param( 'send_form_flg' , intval( $project_model->get_send_form_flg() ) );
+		}
+		return	$this->page_update_input( $error );
+	}
+	/**
+	 * アイテムのアップデート：入力
+	 */
+	private function page_update_input( $error ){
+		$RTN = ''."\n";
+
+		$RTN .= '<p>'."\n";
+		$RTN .= '	プロジェクトの情報を入力して、「確認する」ボタンをクリックしてください。<span class="must">必須</span>印の項目は必ず入力してください。<br />'."\n";
+		$RTN .= '</p>'."\n";
+		if( is_array( $error ) && count( $error ) ){
+			$RTN .= '<p class="error">'."\n";
+			$RTN .= '	入力エラーを検出しました。画面の指示に従って修正してください。<br />'."\n";
+			$RTN .= '</p>'."\n";
+		}
+		$RTN .= '<form action="'.htmlspecialchars( $this->href() ).'" method="post" class="inline">'."\n";
+		$RTN .= '<table style="width:100%;" class="form_elements">'."\n";
+		$RTN .= '	<tr>'."\n";
+		$RTN .= '		<th style="width:30%;"><div>プロジェクト名 <span class="must">必須</span></div></th>'."\n";
+		$RTN .= '		<td style="width:70%;">'."\n";
+		$RTN .= '			<div><input type="text" name="project_name" value="'.htmlspecialchars( $this->px->req()->get_param('project_name') ).'" style="width:80%;" /></div>'."\n";
+		if( strlen( $error['project_name'] ) ){
+			$RTN .= '			<div class="error">'.$error['project_name'].'</div>'."\n";
+		}
+		$RTN .= '		</td>'."\n";
+		$RTN .= '	</tr>'."\n";
+		$RTN .= '</table>'."\n";
+		$RTN .= '	<div class="center"><input type="submit" value="確認する" /></div>'."\n";
+		$RTN .= '	<input type="hidden" name="mode" value="confirm" />'."\n";
+		$RTN .= '</form>'."\n";
+		return	$RTN;
+	}
+	/**
+	 * アイテムのアップデート：確認
+	 */
+	private function page_update_confirm(){
+		$command = $this->get_command();
+		$RTN = ''."\n";
+		$HIDDEN = ''."\n";
+
+		$RTN .= '<p>'."\n";
+		$RTN .= '	入力した内容を確認してください。<br />'."\n";
+		$RTN .= '</p>'."\n";
+
+		$RTN .= '<table style="width:100%;" class="form_elements">'."\n";
+		$RTN .= '	<tr>'."\n";
+		$RTN .= '		<th style="width:30%;"><div>プロジェクト名</div></th>'."\n";
+		$RTN .= '		<td style="width:70%;">'."\n";
+		$RTN .= '			<div>'.htmlspecialchars( $this->px->req()->get_param('project_name') ).'</div>'."\n";
+		$HIDDEN .= '<input type="hidden" name="project_name" value="'.htmlspecialchars( $this->px->req()->get_param('project_name') ).'" />';
+		$RTN .= '		</td>'."\n";
+		$RTN .= '	</tr>'."\n";
+		$RTN .= '</table>'."\n";
+
+		$RTN .= '<div class="unit">'."\n";
+		$RTN .= '<div class="center">'."\n";
+		$RTN .= '<form action="'.htmlspecialchars( $this->href() ).'" method="post" class="inline">'."\n";
+		$RTN .= '	<input type="hidden" name="mode" value="execute" />'."\n";
+		$RTN .= $HIDDEN;
+		$RTN .= '	'.''."\n";
+		$RTN .= '	<input type="submit" value="アップデートする" />'."\n";
+		$RTN .= '</form>'."\n";
+		$RTN .= '<form action="'.htmlspecialchars( $this->href() ).'" method="post" class="inline">'."\n";
+		$RTN .= '	<input type="hidden" name="mode" value="input" />'."\n";
+		$RTN .= $HIDDEN;
+		$RTN .= '	'.''."\n";
+		$RTN .= '	<input type="submit" value="訂正する" />'."\n";
+		$RTN .= '</form>'."\n";
+		$RTN .= '</div>'."\n";
+		$RTN .= '</div>'."\n";
+		$RTN .= '<hr />'."\n";
+		$RTN .= '<div class="unit">'."\n";
+		$RTN .= '<form action="'.htmlspecialchars( $this->href(':'.$command[2].'.'.$command[3]) ).'" method="post" class="inline">'."\n";
+		$RTN .= '	<div class="center"><input type="submit" value="キャンセル" /></div>'."\n";
+		$RTN .= '</form>'."\n";
+		$RTN .= '</div>'."\n";
+		return	$RTN;
+	}
+	/**
+	 * アイテムのアップデート：チェック
+	 */
+	private function check_update_check(){
+		$RTN = array();
+		if( !strlen( $this->px->req()->get_param('project_name') ) ){
+			$RTN['project_name'] = 'プロジェクト名は必須項目です。';
+		}elseif( preg_match( '/\r\n|\r|\n/' , $this->px->req()->get_param('project_name') ) ){
+			$RTN['project_name'] = 'プロジェクト名に改行を含めることはできません。';
+		}elseif( strlen( $this->px->req()->get_param('project_name') ) > 256 ){
+			$RTN['project_name'] = 'プロジェクト名が長すぎます。';
+		}
+		return	$RTN;
+	}
+	/**
+	 * アイテムのアップデート：実行
+	 */
+	private function execute_update_execute(){
+
+		return $this->px->redirect( $this->href().'&mode=thanks' );
+	}
+	/**
+	 * アイテムのアップデート：完了
+	 */
+	private function page_update_thanks(){
+		$command = $this->get_command();
+		$RTN = ''."\n";
+		$RTN .= '<p>アイテムのアップデートを完了しました。</p>'."\n";
+		$RTN .= '<form action="'.htmlspecialchars( $this->href( ':'.$command[2].'.'.$command[3] ) ).'" method="post" class="inline">'."\n";
+		$RTN .= '	<p><input type="submit" value="戻る" /></p>'."\n";
+		$RTN .= '</form>'."\n";
+		return	$RTN;
 	}
 
 
