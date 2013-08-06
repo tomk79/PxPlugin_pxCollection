@@ -1,0 +1,14 @@
+{
+	"themes":[
+		"default",
+		"sample"
+	],
+	"plugins":[
+		"PicklesCrawler",
+		"asazuke"
+	],
+	"contents":[
+		"contactform",
+		"newslist"
+	]
+}

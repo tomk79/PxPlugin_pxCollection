@@ -1,0 +1,25 @@
+{
+	"name": "asazuke",
+	"author": "@tomk79",
+	"description":"取り込みツール。Pickles Crawler と一緒に使うと吉。",
+	"url":"http://pickles.pxt.jp/manual/themes/",
+	"thumb":"data:base64",
+	"images":[
+		"data:base64",
+		"data:base64",
+		"data:base64"
+	],
+	"flags":{
+		"main_color": "gray",
+		"pains": 2 
+	},
+	"versions":[
+		{
+			"type": "zip",
+			"md5_hash": "xxxxxxxxxxxxxxxxxxxxxxxxxxx",
+			"url": "http://pickles.pxt.jp/bbbbbb/PxPlugin_asazuke-1.0.0b6.zip",
+			"version": "1.0.0b6",
+			"release_date": "2013-07-07"
+		}
+	]
+}

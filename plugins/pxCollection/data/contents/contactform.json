@@ -1,0 +1,25 @@
+{
+	"name":"contactform",
+	"author":"@tomk79",
+	"description":"お問い合わせフォームのテンプレートコンテンツ。",
+	"url":"http://pickles.pxt.jp/manual/themes/",
+	"thumb":"data:base64",
+	"images":[
+		"data:base64",
+		"data:base64",
+		"data:base64"
+	],
+	"flags":{
+		"main_color": "gray",
+		"pains": 2 
+	},
+	"versions":[
+		{
+			"type": "zip",
+			"md5_hash": "yyyyyyyyyyyyyyyyyyyyyyyyyy",
+			"url": "http://pickles.pxt.jp/aaaaa/PxPlugin_PicklesCrawler-1.0.0b6.zip",
+			"version": "1.0.0b6",
+			"release_date": "2013-07-07"
+		}
+	]
+}
