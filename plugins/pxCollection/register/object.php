@@ -52,6 +52,42 @@ class pxplugin_pxCollection_register_object{
 		return new $class_name( $this->px, $category, $item_name );
 	}
 
+	/**
+	 * プラグインAPI info を生成する
+	 */
+	public function factory_info(){
+		$class_name = $this->px->load_px_plugin_class('/pxCollection/register/info.php');
+		if(!$class_name){
+			return false;
+		}
+		return new $class_name();
+	}
+
+	/**
+	 * HTTPAccessオブジェクトを生成して返す
+	 */
+	public function factory_httpaccess(){
+		@require_once( $this->px->get_conf('paths.px_dir').'libs/PxHTTPAccess/PxHTTPAccess.php' );
+		return new PxHTTPAccess();
+	}
+
+	/**
+	 * アーカイバオブジェクトを生成する
+	 */
+	public function factory_archiver( $type ){
+		$class_name = $this->px->load_px_plugin_class('/pxCollection/archivers/'.$type.'.php');
+		if(!$class_name){
+			return false;
+		}
+		switch($type){
+			case 'zip':
+				return new $class_name( $this->px ); break;
+			case 'tgz':
+				return new $class_name( $this->px, $this->px->get_conf('commands.tar') ); break;
+		}
+		return false;
+	}
+
 }
 
 ?>

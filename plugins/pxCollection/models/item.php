@@ -20,10 +20,23 @@ class pxplugin_pxCollection_models_item extends px_bases_dao{
 	 */
 	public function __construct( $px, $category, $item_name ){
 		parent::__construct( $px );
-		$this->category = $category;
-		$this->item_name = $item_name;
 
 		$this->path_data_cache_dir = $this->px->get_plugin_object('pxCollection')->get_data_cache_dir();
+
+		switch($category){
+			case 'plugins':
+			case 'themes':
+			case 'contents':
+				break;
+			default:
+				// 不明なカテゴリはNG
+				return false;
+				break;
+		}
+		if( !preg_match('/^[a-zA-Z][a-zA-Z0-9\_]*$/s', $item_name) ){
+			// item_name が不正な形式の場合NG
+			return false;
+		}
 
 		// [UTODO]一旦の仮実装。データベースの本体をどこに置くか未決定
 		if( !is_file($path_data_dir.'/db/'.$category.'/'.$item_name.'.json') ){
@@ -33,6 +46,8 @@ class pxplugin_pxCollection_models_item extends px_bases_dao{
 				return false;
 			}
 		}
+		$this->category = $category;
+		$this->item_name = $item_name;
 		$this->data = @json_decode( $this->px->dbh()->file_get_contents( $this->path_data_cache_dir.'/db/'.$category.'/'.$item_name.'.json') );
 
 		$this->versions = array();
@@ -111,10 +126,44 @@ class pxplugin_pxCollection_models_item extends px_bases_dao{
 	}
 
 	/**
+	 * 最新のバージョンを取得する
+	 */
+	public function get_current_version_info(){
+		foreach( $this->versions as $version ){
+			return $version;
+		}
+		return false;
+	}
+
+	/**
+	 * 指定したバージョンを取得する
+	 */
+	public function get_version_info( $version_num ){
+		return $this->versions[$version_num];
+	}
+
+	/**
 	 * 更新日を取得する
 	 */
 	public function get_update_date(){
 		return $this->px->dbh()->datetime2int( $this->data->update_date );
+	}
+
+
+	/**
+	 * バージョン番号を解析する
+	 */
+	public function parse_version_number( $version_string ){
+		if( is_array($version_string) ){ return $version_string; }
+		$rtn = array();
+		preg_match('/^([0-9]+)\.([0-9]+)\.([0-9]+)(?:(a|b)([0-9]+))?(\-nb)?$/si', $matched);
+		$rtn['major'] = $matched[1];
+		$rtn['minor'] = $matched[2];
+		$rtn['release'] = $matched[3];
+		$rtn['status'] = $matched[4];
+		$rtn['status_num'] = $matched[5];
+		$rtn['nb'] = isset($matched[6]);
+		return $rtn;
 	}
 
 }

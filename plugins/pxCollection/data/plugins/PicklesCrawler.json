@@ -16,10 +16,17 @@
 	"versions":[
 		{
 			"type": "zip",
-			"md5_hash": "yyyyyyyyyyyyyyyyyyyyyyyyyy",
-			"url": "http://pickles.pxt.jp/aaaaa/PxPlugin_PicklesCrawler-1.0.0b6.zip",
-			"version": "1.0.0b6",
-			"release_date": "2013-07-07"
+			"md5_hash": "68527ad0d641f0547ae4d9051c1dc678",
+			"url": "https://github.com/tomk79/PxPlugin_PicklesCrawler/archive/1.0.0b2.zip",
+			"version": "1.0.0b2",
+			"release_date": "2013-06-08"
+		} ,
+		{
+			"type": "zip",
+			"md5_hash": "419d555a6bd404d582ae5b0b23c5084c",
+			"url": "https://github.com/tomk79/PxPlugin_PicklesCrawler/archive/1.0.0b1.zip",
+			"version": "1.0.0b1",
+			"release_date": "2013-05-02"
 		}
 	]
 }

@@ -266,21 +266,27 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 	 * アイテムのインストール
 	 */
 	private function start_install( $category, $item_name ){
-		$error = $this->check_install_check( $category, $item_name );
+		$obj = $this->px->get_plugin_object( 'pxCollection' );
+		$model_collections = $obj->factory_model_collections();
+		$item_info = $model_collections->get_item_info( $category, $item_name );
+		$version_info = $item_info->get_current_version_info();
+
+		$error = $this->check_install_check( $item_info, $version_info );
 		if( $this->px->req()->get_param('mode') == 'thanks' ){
-			return	$this->page_install_thanks( $category, $item_name );
+			return	$this->page_install_thanks( $item_info, $version_info );
 		}elseif( $this->px->req()->get_param('mode') == 'execute' && !count( $error ) ){
-			return	$this->execute_install_execute( $category, $item_name );
+			return	$this->execute_install_execute( $item_info, $version_info );
 		}elseif( !strlen( $this->px->req()->get_param('mode') ) ){
 			$error = array();
 			// $this->px->req()->set_param( 'send_form_flg' , intval( $project_model->get_send_form_flg() ) );
 		}
-		return	$this->page_install_input( $category, $item_name, $error );
+		return	$this->page_install_input( $item_info, $version_info, $error );
 	}
 	/**
 	 * アイテムのインストール：入力
 	 */
-	private function page_install_input( $category, $item_name, $error ){
+	private function page_install_input( $item_info, $version_info, $error ){
+
 		$RTN = '';
 
 		$RTN .= '<p>'."\n";
@@ -299,13 +305,45 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 		$RTN .= '	<tr>'."\n";
 		$RTN .= '		<th style="width:30%;"><div>種別</div></th>'."\n";
 		$RTN .= '		<td style="width:70%;">'."\n";
-		$RTN .= '			<div>'.t::h($category).'</div>'."\n";
+		$RTN .= '			<div>'.t::h($item_info->get_category()).'</div>'."\n";
 		$RTN .= '		</td>'."\n";
 		$RTN .= '	</tr>'."\n";
 		$RTN .= '	<tr>'."\n";
 		$RTN .= '		<th style="width:30%;"><div>アイテム名</div></th>'."\n";
 		$RTN .= '		<td style="width:70%;">'."\n";
-		$RTN .= '			<div>'.t::h($item_name).'</div>'."\n";
+		$RTN .= '			<div>'.t::h($item_info->get_item_name()).'</div>'."\n";
+		$RTN .= '		</td>'."\n";
+		$RTN .= '	</tr>'."\n";
+		$RTN .= '	<tr>'."\n";
+		$RTN .= '		<th style="width:30%;"><div>説明</div></th>'."\n";
+		$RTN .= '		<td style="width:70%;">'."\n";
+		$RTN .= '			<div>'.t::h($item_info->get_description()).'</div>'."\n";
+		$RTN .= '		</td>'."\n";
+		$RTN .= '	</tr>'."\n";
+		$RTN .= '	<tr>'."\n";
+		$RTN .= '		<th style="width:30%;"><div>URL</div></th>'."\n";
+		$RTN .= '		<td style="width:70%;">'."\n";
+		$RTN .= '			<div>'.t::h($item_info->get_url()).'</div>'."\n";
+		$RTN .= '		</td>'."\n";
+		$RTN .= '	</tr>'."\n";
+		$RTN .= '	<tr>'."\n";
+		$RTN .= '		<th style="width:30%;"><div>作者</div></th>'."\n";
+		$RTN .= '		<td style="width:70%;">'."\n";
+		$RTN .= '			<div>'.t::h($item_info->get_author()).'</div>'."\n";
+		$RTN .= '		</td>'."\n";
+		$RTN .= '	</tr>'."\n";
+		$RTN .= '	<tr>'."\n";
+		$RTN .= '		<th style="width:30%;"><div>更新日</div></th>'."\n";
+		$RTN .= '		<td style="width:70%;">'."\n";
+		$RTN .= '			<div>'.t::h($item_info->get_update_date()).'</div>'."\n";
+		$RTN .= '		</td>'."\n";
+		$RTN .= '	</tr>'."\n";
+		$RTN .= '	<tr>'."\n";
+		$RTN .= '		<th style="width:30%;"><div>バージョン</div></th>'."\n";
+		$RTN .= '		<td style="width:70%;">'."\n";
+		$RTN .= '			<div>'.t::h($version_info['version']).' ('.date('Y-m-d', $version_info['release_date']).')</div>'."\n";
+		$RTN .= '			<div>'.t::h($version_info['url']).'</div>'."\n";
+		$RTN .= '			<div>'.t::h($version_info['md5_hash']).'</div>'."\n";
 		$RTN .= '		</td>'."\n";
 		$RTN .= '	</tr>'."\n";
 		$RTN .= '</table>'."\n";
@@ -319,7 +357,7 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 
 		$RTN .= '<hr />'."\n";
 
-		$RTN .= '<form action="'.htmlspecialchars( $this->href(':'.$category.'.'.$item_name) ).'" method="post" class="inline">'."\n";
+		$RTN .= '<form action="'.htmlspecialchars( $this->href(':'.$item_info->get_category().'.'.$item_info->get_item_name()) ).'" method="post" class="inline">'."\n";
 		$RTN .= '<div class="unit form_buttons">'."\n";
 		$RTN .= '	<ul>'."\n";
 		$RTN .= '		<li class="form_buttons-cancel"><input type="submit" value="キャンセル" /></li>'."\n";
@@ -333,12 +371,18 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 	/**
 	 * アイテムのインストール：チェック
 	 */
-	private function check_install_check( $category, $item_name ){
+	private function check_install_check( $item_info, $version_info ){
 
 		$RTN = array();
 
-		if( is_dir( $this->px->get_conf('paths.px_dir').$category.'/'.$item_name.'/' ) ){
-			$RTN['common'] = 'すでにインストールされています。';
+		// if( is_dir( $this->px->get_conf('paths.px_dir').$category.'/'.$item_name.'/' ) ){
+		// 	$RTN['common'] = 'すでにインストールされています。';
+		// }
+		if( !strlen($item_info->get_item_name()) ){
+			$RTN['common'] = '存在しないアイテムです。';
+		}
+		if( !strlen($version_info['url']) ){
+			$RTN['common'] = 'インストールパッケージのURLが登録されていないアイテムです。';
 		}
 
 		return	$RTN;
@@ -346,14 +390,77 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 	/**
 	 * アイテムのインストール：実行
 	 */
-	private function execute_install_execute( $category, $item_name ){
+	private function execute_install_execute( $item_info, $version_info ){
+		$obj = $this->px->get_plugin_object( 'pxCollection' );
+
+		$basename_dl_file = $item_info->get_item_name().'-'.$version_info['version'].'-'.$version_info['md5_hash'].'.'.strtolower($version_info['type']);
+		$path_dl_file = $obj->get_data_cache_dir().'db/'.$item_info->get_category().'/'.$basename_dl_file;
+		if( !$this->px->dbh()->mkdir_all( dirname($path_dl_file) ) ){ return '<p class="error">キャッシュ用ディレクトリ '.t::h( $this->px->dbh()->get_realpath(dirname($path_dl_file)).'/' ).' の作成に失敗しました。</p>'; }
+
+		// アーカイブをダウンロード
+		$httpaccess = $obj->factory_httpaccess();
+		$httpaccess->clear_request_header();//初期化
+		$httpaccess->set_url( $version_info['url'] );//ダウンロードするURL
+		$httpaccess->set_method( 'GET' );//メソッド
+		$httpaccess->set_user_agent( 'pxCollection/'.$obj->factory_info()->get_version().'(PicklesFramework)' );//HTTP_USER_AGENT
+		$httpaccess->save_http_contents( $path_dl_file );//ダウンロードを実行する
+		clearstatcache();
+
+		if( !is_file($path_dl_file) ){
+			return '<p class="error">ダウンロードに失敗しました。</p>';
+		}
+
+		$result = $httpaccess->get_status_cd();
+		if( $result != 200 ){
+			$this->px->dbh()->rm($path_dl_file);
+			return '<p class="error">ダウンロードに失敗しました。(status = '.$result.')</p>';
+		}
+
+		$md5_dlfile = md5_file($path_dl_file);
+		if( $md5_dlfile != $version_info['md5_hash'] ){
+			$this->px->dbh()->rm($path_dl_file);
+			return '<p class="error">MD5ハッシュ値が一致しません。('.t::h($md5_dlfile.'<=>'.$version_info['md5_hash']).')</p>';
+		}
+
+
+		// アーカイブを解凍
+		$path_tmp_dir = $obj->get_data_cache_dir().'tmp/'.$md5_dlfile.'/';
+		if( !$this->px->dbh()->mkdir_all( $path_tmp_dir ) ){
+			return '<p class="error">アーカイブ解凍用ディレクトリ '.t::h( $this->px->dbh()->get_realpath($path_tmp_dir).'/' ).' の作成に失敗しました。</p>';
+		}
+		$archiver = $obj->factory_archiver(strtolower($version_info['type']));
+		if( !$archiver ){
+			return '<p class="error">アーカイバの生成に失敗しました。</p>';
+		}
+		if( !$archiver->unzip($path_dl_file, $path_tmp_dir) ){
+			return '<p class="error">アーカイブ解凍に失敗しました。</p>';
+		}
+
+		// 解凍したアーカイブ内を確認
+		// ルートディレクトリを調べる
+		$path_root_dir = $path_tmp_dir;
+		if( !is_dir( $path_tmp_dir.$item_info->get_category().'/'.$item_info->get_item_name() ) ){
+			$tmp_list = $this->px->dbh()->ls($path_tmp_dir);
+			if( is_array($tmp_list) && count($tmp_list) == 1 && is_dir( $path_tmp_dir.$tmp_list[0].'/'.$item_info->get_category().'/'.$item_info->get_item_name() ) ){
+				$path_root_dir = $path_tmp_dir;
+			}else{
+				$this->px->dbh()->rm($path_tmp_dir);
+				return '<p class="error">アーカイブを解凍しましたが、格納形式が不正なようです。処理を中止します。</p>';
+			}
+		}
+		test::var_dump($path_root_dir);
+
+return '<p>開発中</p>';
+
+		// 後処理
+		$this->px->dbh()->rm($path_tmp_dir);
 
 		return $this->px->redirect( $this->href().'&mode=thanks' );
 	}
 	/**
 	 * アイテムのインストール：完了
 	 */
-	private function page_install_thanks( $category, $item_name ){
+	private function page_install_thanks( $item_info, $version_info ){
 		$command = $this->get_command();
 		$RTN = ''."\n";
 		$RTN .= '<p>アイテムのインストールを完了しました。</p>'."\n";
