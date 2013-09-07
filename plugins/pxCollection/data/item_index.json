@@ -4,8 +4,9 @@
 		"sample"
 	],
 	"plugins":[
+		"asazuke" ,
 		"PicklesCrawler",
-		"asazuke"
+		"sitemapExcel"
 	],
 	"contents":[
 		"contactform",

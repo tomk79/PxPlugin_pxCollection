@@ -25,10 +25,6 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 				// アンインストール
 				print $this->html_template( $this->start_uninstall( $command[2], $command[3] ) );
 				exit;
-			}elseif( $command[4] == 'update' ){
-				// アップデート
-				print $this->html_template( $this->start_update( $command[2], $command[3] ) );
-				exit;
 			}
 
 			// 詳細ページ
@@ -238,14 +234,15 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 
 		$src .= ''."\n";
 		$src .= '<ul class="horizontal">'."\n";
-		// if( !is_dir( $this->px->get_conf('paths.px_dir').$category.'/'.$item_name.'/' ) ){
+		if( !is_dir( $this->px->get_conf('paths.px_dir').$category.'/'.$item_name.'/' ) ){
 			$src .= '<li class="horizontal-li"><a href="'.t::h($this->href(':'.$category.'.'.$item_name.'.install')).'">インストール</a></li>'."\n";
-		// }else{
-			$src .= '<li class="horizontal-li"><a href="'.t::h($this->href(':'.$category.'.'.$item_name.'.update')).'">アップデート</a></li>'."\n";
+		}else{
+			$src .= '<li class="horizontal-li"><a href="'.t::h($this->href(':'.$category.'.'.$item_name.'.install')).'">アップデート</a></li>'."\n";
 			$src .= '<li class="horizontal-li"><a href="'.t::h($this->href(':'.$category.'.'.$item_name.'.uninstall')).'">アンインストール</a></li>'."\n";
-		// }
+		}
 		$src .= '</ul>'."\n";
 
+		$src .= '<hr />'."\n";
 		$src .= '<form action="'.t::h($this->href(':'.$category)).'" method="post" class="inline">'."\n";
 		$src .= '<div class="unit form_buttons">'."\n";
 		$src .= '	<ul>'."\n";
@@ -391,69 +388,20 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 	 * アイテムのインストール：実行
 	 */
 	private function execute_install_execute( $item_info, $version_info ){
-		$obj = $this->px->get_plugin_object( 'pxCollection' );
 
-		$basename_dl_file = $item_info->get_item_name().'-'.$version_info['version'].'-'.$version_info['md5_hash'].'.'.strtolower($version_info['type']);
-		$path_dl_file = $obj->get_data_cache_dir().'db/'.$item_info->get_category().'/'.$basename_dl_file;
-		if( !$this->px->dbh()->mkdir_all( dirname($path_dl_file) ) ){ return '<p class="error">キャッシュ用ディレクトリ '.t::h( $this->px->dbh()->get_realpath(dirname($path_dl_file)).'/' ).' の作成に失敗しました。</p>'; }
-
-		// アーカイブをダウンロード
-		$httpaccess = $obj->factory_httpaccess();
-		$httpaccess->clear_request_header();//初期化
-		$httpaccess->set_url( $version_info['url'] );//ダウンロードするURL
-		$httpaccess->set_method( 'GET' );//メソッド
-		$httpaccess->set_user_agent( 'pxCollection/'.$obj->factory_info()->get_version().'(PicklesFramework)' );//HTTP_USER_AGENT
-		$httpaccess->save_http_contents( $path_dl_file );//ダウンロードを実行する
-		clearstatcache();
-
-		if( !is_file($path_dl_file) ){
-			return '<p class="error">ダウンロードに失敗しました。</p>';
-		}
-
-		$result = $httpaccess->get_status_cd();
-		if( $result != 200 ){
-			$this->px->dbh()->rm($path_dl_file);
-			return '<p class="error">ダウンロードに失敗しました。(status = '.$result.')</p>';
-		}
-
-		$md5_dlfile = md5_file($path_dl_file);
-		if( $md5_dlfile != $version_info['md5_hash'] ){
-			$this->px->dbh()->rm($path_dl_file);
-			return '<p class="error">MD5ハッシュ値が一致しません。('.t::h($md5_dlfile.'<=>'.$version_info['md5_hash']).')</p>';
-		}
-
-
-		// アーカイブを解凍
-		$path_tmp_dir = $obj->get_data_cache_dir().'tmp/'.$md5_dlfile.'/';
-		if( !$this->px->dbh()->mkdir_all( $path_tmp_dir ) ){
-			return '<p class="error">アーカイブ解凍用ディレクトリ '.t::h( $this->px->dbh()->get_realpath($path_tmp_dir).'/' ).' の作成に失敗しました。</p>';
-		}
-		$archiver = $obj->factory_archiver(strtolower($version_info['type']));
-		if( !$archiver ){
-			return '<p class="error">アーカイバの生成に失敗しました。</p>';
-		}
-		if( !$archiver->unzip($path_dl_file, $path_tmp_dir) ){
-			return '<p class="error">アーカイブ解凍に失敗しました。</p>';
-		}
-
-		// 解凍したアーカイブ内を確認
-		// ルートディレクトリを調べる
-		$path_root_dir = $path_tmp_dir;
-		if( !is_dir( $path_tmp_dir.$item_info->get_category().'/'.$item_info->get_item_name() ) ){
-			$tmp_list = $this->px->dbh()->ls($path_tmp_dir);
-			if( is_array($tmp_list) && count($tmp_list) == 1 && is_dir( $path_tmp_dir.$tmp_list[0].'/'.$item_info->get_category().'/'.$item_info->get_item_name() ) ){
-				$path_root_dir = $path_tmp_dir;
-			}else{
-				$this->px->dbh()->rm($path_tmp_dir);
-				return '<p class="error">アーカイブを解凍しましたが、格納形式が不正なようです。処理を中止します。</p>';
+		$result = $item_info->install( $version_info['version'] );
+		if( !$result ){
+			$rtn = '';
+			$rtn .= '<p>エラーが発生しました。</p>'."\n";
+			$errors = $item_info->get_error_report();
+			$rtn .= '<ul>'."\n";
+			foreach( $errors as $error ){
+				$rtn .= '<li>'.t::h( $error['message'] ).'</li>'."\n";
 			}
+			$rtn .= '</ul>'."\n";
+			return $rtn;
 		}
-		test::var_dump($path_root_dir);
 
-return '<p>開発中</p>';
-
-		// 後処理
-		$this->px->dbh()->rm($path_tmp_dir);
 
 		return $this->px->redirect( $this->href().'&mode=thanks' );
 	}
@@ -594,136 +542,6 @@ return '<p>開発中</p>';
 		$command = $this->get_command();
 		$RTN = ''."\n";
 		$RTN .= '<p>アイテムのアンインストールを完了しました。</p>'."\n";
-		$RTN .= '<form action="'.htmlspecialchars( $this->href( ':'.$command[2].'.'.$command[3] ) ).'" method="post" class="inline">'."\n";
-		$RTN .= '	<p><input type="submit" value="戻る" /></p>'."\n";
-		$RTN .= '</form>'."\n";
-		return	$RTN;
-	}
-
-	// -----------------------------------------------------------------------------------------
-
-	/**
-	 * アイテムのアップデート
-	 */
-	private function start_update( $category, $item_name ){
-		$error = $this->check_update_check( $category, $item_name );
-		if( $this->px->req()->get_param('mode') == 'thanks' ){
-			return	$this->page_update_thanks( $category, $item_name );
-		}elseif( $this->px->req()->get_param('mode') == 'confirm' && !count( $error ) ){
-			return	$this->page_update_confirm( $category, $item_name );
-		}elseif( $this->px->req()->get_param('mode') == 'execute' && !count( $error ) ){
-			return	$this->execute_update_execute( $category, $item_name );
-		}elseif( !strlen( $this->px->req()->get_param('mode') ) ){
-			$error = array();
-			// $this->px->req()->set_param( 'send_form_flg' , intval( $project_model->get_send_form_flg() ) );
-		}
-		return	$this->page_update_input( $category, $item_name, $error );
-	}
-	/**
-	 * アイテムのアップデート：入力
-	 */
-	private function page_update_input( $category, $item_name, $error ){
-		$RTN = ''."\n";
-
-		$RTN .= '<p>'."\n";
-		$RTN .= '	プロジェクトの情報を入力して、「確認する」ボタンをクリックしてください。<span class="must">必須</span>印の項目は必ず入力してください。<br />'."\n";
-		$RTN .= '</p>'."\n";
-		if( is_array( $error ) && count( $error ) ){
-			$RTN .= '<p class="error">'."\n";
-			$RTN .= '	入力エラーを検出しました。画面の指示に従って修正してください。<br />'."\n";
-			$RTN .= '</p>'."\n";
-		}
-		$RTN .= '<form action="'.htmlspecialchars( $this->href() ).'" method="post" class="inline">'."\n";
-		$RTN .= '<table style="width:100%;" class="form_elements">'."\n";
-		$RTN .= '	<tr>'."\n";
-		$RTN .= '		<th style="width:30%;"><div>プロジェクト名 <span class="must">必須</span></div></th>'."\n";
-		$RTN .= '		<td style="width:70%;">'."\n";
-		$RTN .= '			<div><input type="text" name="project_name" value="'.htmlspecialchars( $this->px->req()->get_param('project_name') ).'" style="width:80%;" /></div>'."\n";
-		if( strlen( $error['project_name'] ) ){
-			$RTN .= '			<div class="error">'.$error['project_name'].'</div>'."\n";
-		}
-		$RTN .= '		</td>'."\n";
-		$RTN .= '	</tr>'."\n";
-		$RTN .= '</table>'."\n";
-		$RTN .= '	<div class="center"><input type="submit" value="確認する" /></div>'."\n";
-		$RTN .= '	<input type="hidden" name="mode" value="confirm" />'."\n";
-		$RTN .= '</form>'."\n";
-		return	$RTN;
-	}
-	/**
-	 * アイテムのアップデート：確認
-	 */
-	private function page_update_confirm( $category, $item_name ){
-		$command = $this->get_command();
-		$RTN = ''."\n";
-		$HIDDEN = ''."\n";
-
-		$RTN .= '<p>'."\n";
-		$RTN .= '	入力した内容を確認してください。<br />'."\n";
-		$RTN .= '</p>'."\n";
-
-		$RTN .= '<table style="width:100%;" class="form_elements">'."\n";
-		$RTN .= '	<tr>'."\n";
-		$RTN .= '		<th style="width:30%;"><div>プロジェクト名</div></th>'."\n";
-		$RTN .= '		<td style="width:70%;">'."\n";
-		$RTN .= '			<div>'.htmlspecialchars( $this->px->req()->get_param('project_name') ).'</div>'."\n";
-		$HIDDEN .= '<input type="hidden" name="project_name" value="'.htmlspecialchars( $this->px->req()->get_param('project_name') ).'" />';
-		$RTN .= '		</td>'."\n";
-		$RTN .= '	</tr>'."\n";
-		$RTN .= '</table>'."\n";
-
-		$RTN .= '<div class="unit">'."\n";
-		$RTN .= '<div class="center">'."\n";
-		$RTN .= '<form action="'.htmlspecialchars( $this->href() ).'" method="post" class="inline">'."\n";
-		$RTN .= '	<input type="hidden" name="mode" value="execute" />'."\n";
-		$RTN .= $HIDDEN;
-		$RTN .= '	'.''."\n";
-		$RTN .= '	<input type="submit" value="アップデートする" />'."\n";
-		$RTN .= '</form>'."\n";
-		$RTN .= '<form action="'.htmlspecialchars( $this->href() ).'" method="post" class="inline">'."\n";
-		$RTN .= '	<input type="hidden" name="mode" value="input" />'."\n";
-		$RTN .= $HIDDEN;
-		$RTN .= '	'.''."\n";
-		$RTN .= '	<input type="submit" value="訂正する" />'."\n";
-		$RTN .= '</form>'."\n";
-		$RTN .= '</div>'."\n";
-		$RTN .= '</div>'."\n";
-		$RTN .= '<hr />'."\n";
-		$RTN .= '<div class="unit">'."\n";
-		$RTN .= '<form action="'.htmlspecialchars( $this->href(':'.$command[2].'.'.$command[3]) ).'" method="post" class="inline">'."\n";
-		$RTN .= '	<div class="center"><input type="submit" value="キャンセル" /></div>'."\n";
-		$RTN .= '</form>'."\n";
-		$RTN .= '</div>'."\n";
-		return	$RTN;
-	}
-	/**
-	 * アイテムのアップデート：チェック
-	 */
-	private function check_update_check( $category, $item_name ){
-		$RTN = array();
-		if( !strlen( $this->px->req()->get_param('project_name') ) ){
-			$RTN['project_name'] = 'プロジェクト名は必須項目です。';
-		}elseif( preg_match( '/\r\n|\r|\n/' , $this->px->req()->get_param('project_name') ) ){
-			$RTN['project_name'] = 'プロジェクト名に改行を含めることはできません。';
-		}elseif( strlen( $this->px->req()->get_param('project_name') ) > 256 ){
-			$RTN['project_name'] = 'プロジェクト名が長すぎます。';
-		}
-		return	$RTN;
-	}
-	/**
-	 * アイテムのアップデート：実行
-	 */
-	private function execute_update_execute( $category, $item_name ){
-
-		return $this->px->redirect( $this->href().'&mode=thanks' );
-	}
-	/**
-	 * アイテムのアップデート：完了
-	 */
-	private function page_update_thanks( $category, $item_name ){
-		$command = $this->get_command();
-		$RTN = ''."\n";
-		$RTN .= '<p>アイテムのアップデートを完了しました。</p>'."\n";
 		$RTN .= '<form action="'.htmlspecialchars( $this->href( ':'.$command[2].'.'.$command[3] ) ).'" method="post" class="inline">'."\n";
 		$RTN .= '	<p><input type="submit" value="戻る" /></p>'."\n";
 		$RTN .= '</form>'."\n";

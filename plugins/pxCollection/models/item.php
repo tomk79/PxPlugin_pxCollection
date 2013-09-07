@@ -11,6 +11,7 @@ class pxplugin_pxCollection_models_item extends px_bases_dao{
 	private $path_data_cache_dir = null;
 	private $data = null;
 	private $versions = null;
+	private $errors = array();
 
 	/**
 	 * コンストラクタ
@@ -164,6 +165,140 @@ class pxplugin_pxCollection_models_item extends px_bases_dao{
 		$rtn['status_num'] = $matched[5];
 		$rtn['nb'] = isset($matched[6]);
 		return $rtn;
+	}
+
+	/**
+	 * アイテムのインストールを実行する
+	 */
+	public function install( $version_num = null ){
+		if( !strlen($version_num) ){
+			$version_info = $this->get_current_version_info();
+		}else{
+			$version_info = $this->get_version_info( $version_num );
+		}
+		if( !$version_info ){
+			$this->error('対象とするバージョンを特定できませんでした。');
+			return false;
+		}
+		$item_info = $this;
+
+		$obj = $this->px->get_plugin_object( 'pxCollection' );
+
+		$basename_dl_file = $item_info->get_item_name().'-'.$version_info['version'].'-'.$version_info['md5_hash'].'.'.strtolower($version_info['type']);
+		$path_dl_file = $obj->get_data_cache_dir().'db/'.$item_info->get_category().'/'.$basename_dl_file;
+		if( !$this->px->dbh()->mkdir_all( dirname($path_dl_file) ) ){
+			$this->error('キャッシュ用ディレクトリ '.$this->px->dbh()->get_realpath(dirname($path_dl_file)).'/ の作成に失敗しました。');
+			return false;
+		}
+
+		// アーカイブをダウンロード
+		$httpaccess = $obj->factory_httpaccess();
+		$httpaccess->clear_request_header();//初期化
+		$httpaccess->set_url( $version_info['url'] );//ダウンロードするURL
+		$httpaccess->set_method( 'GET' );//メソッド
+		$httpaccess->set_user_agent( 'pxCollection/'.$obj->factory_info()->get_version().'(PicklesFramework)' );//HTTP_USER_AGENT
+		$httpaccess->save_http_contents( $path_dl_file );//ダウンロードを実行する
+		clearstatcache();
+
+		if( !is_file($path_dl_file) ){
+			$this->error('ダウンロードに失敗しました。');
+			return false;
+		}
+
+		$result = $httpaccess->get_status_cd();
+		if( $result != 200 ){
+			$this->px->dbh()->rm($path_dl_file);
+			$this->error('ダウンロードに失敗しました。(status = '.$result.')');
+			return false;
+		}
+
+		$md5_dlfile = md5_file($path_dl_file);
+		if( $md5_dlfile != $version_info['md5_hash'] ){
+			$this->px->dbh()->rm($path_dl_file);
+			$this->error('MD5ハッシュ値が一致しません。('.$md5_dlfile.'<=>'.$version_info['md5_hash'].')');
+			return false;
+		}
+
+
+		// アーカイブを解凍
+		$path_tmp_dir = $obj->get_data_cache_dir().'tmp/'.$md5_dlfile.'/';
+		if( !$this->px->dbh()->mkdir_all( $path_tmp_dir ) ){
+			$this->error('アーカイブ解凍用ディレクトリ '.$this->px->dbh()->get_realpath($path_tmp_dir).'/ の作成に失敗しました。');
+			return false;
+		}
+		$archiver = $obj->factory_archiver(strtolower($version_info['type']));
+		if( !$archiver ){
+			$this->error('アーカイバの生成に失敗しました。');
+			return false;
+		}
+		if( !$archiver->unzip($path_dl_file, $path_tmp_dir) ){
+			$this->error('アーカイブ解凍に失敗しました。');
+			return false;
+		}
+
+		// 解凍したアーカイブ内を確認
+		// ルートディレクトリを調べる
+		$path_root_dir = $path_tmp_dir;
+		if( !is_dir( $path_root_dir.$item_info->get_category().'/'.$item_info->get_item_name() ) ){
+			$tmp_list = $this->px->dbh()->ls($path_tmp_dir);
+			if( is_array($tmp_list) && count($tmp_list) == 1 && is_dir( $path_tmp_dir.$tmp_list[0].'/'.$item_info->get_category().'/'.$item_info->get_item_name() ) ){
+				$path_root_dir = $path_tmp_dir.$tmp_list[0].'/';
+			}
+		}
+		clearstatcache();
+		if( !is_dir( $path_root_dir.$item_info->get_category().'/'.$item_info->get_item_name() ) ){
+			$this->px->dbh()->rm($path_tmp_dir);
+			$this->error('アーカイブを解凍しましたが、格納形式が不正なようです。処理を中止します。');
+			return false;
+		}
+
+		test::var_dump($path_root_dir);
+
+		// インストールを実行する
+		$path_px_dir = $this->px->get_conf('paths.px_dir');
+		if( $item_info->get_category() == 'plugins' ){
+			if( !$this->px->dbh()->copy_all( $path_root_dir.'plugins/'.$item_info->get_item_name(), $path_px_dir.'plugins/'.$item_info->get_item_name() ) ){
+				$this->px->dbh()->rm($path_tmp_dir);
+				$this->error('プラグインのインストールに失敗しました。');
+				return false;
+			}
+		}
+
+		// 同梱ライブラリをインストールする
+		if( is_dir( $path_root_dir.'libs' ) ){
+			$liblist = $this->px->dbh()->ls( $path_root_dir.'libs' );
+			foreach( $liblist as $libName ){
+				if( !$this->px->dbh()->copy_all( $path_root_dir.'libs/'.$libName, $path_px_dir.'libs/'.$libName ) ){
+					$this->px->dbh()->rm($path_tmp_dir);
+					$this->error('ライブラリ '.$libName.' のインストールに失敗しました。');
+					return false;
+				}
+			}
+		}
+
+		// 後処理
+		$this->px->dbh()->rm($path_tmp_dir);
+
+		return true;
+	}// install()
+
+	/**
+	 * 内部エラーを記録する
+	 */
+	private function error( $error_message ){
+		array_push( $this->errors,
+			array(
+				'message'=>$error_message ,
+			)
+		);
+		return true;
+	}// error()
+
+	/**
+	 * 実行時エラーを取得する
+	 */
+	public function get_error_report(){
+		return $this->errors;
 	}
 
 }
