@@ -192,6 +192,7 @@ class pxplugin_pxCollection_models_item extends px_bases_dao{
 		}
 
 		// アーカイブをダウンロード
+		set_time_limit(0);
 		$httpaccess = $obj->factory_httpaccess();
 		$httpaccess->clear_request_header();//初期化
 		$httpaccess->set_url( $version_info['url'] );//ダウンロードするURL
@@ -218,6 +219,7 @@ class pxplugin_pxCollection_models_item extends px_bases_dao{
 			$this->error('MD5ハッシュ値が一致しません。('.$md5_dlfile.'<=>'.$version_info['md5_hash'].')');
 			return false;
 		}
+		set_time_limit(30);
 
 
 		// アーカイブを解凍
@@ -231,10 +233,12 @@ class pxplugin_pxCollection_models_item extends px_bases_dao{
 			$this->error('アーカイバの生成に失敗しました。');
 			return false;
 		}
+		set_time_limit(0);
 		if( !$archiver->unzip($path_dl_file, $path_tmp_dir) ){
 			$this->error('アーカイブ解凍に失敗しました。');
 			return false;
 		}
+		set_time_limit(30);
 
 		// 解凍したアーカイブ内を確認
 		// ルートディレクトリを調べる
@@ -252,9 +256,8 @@ class pxplugin_pxCollection_models_item extends px_bases_dao{
 			return false;
 		}
 
-		test::var_dump($path_root_dir);
-
 		// インストールを実行する
+		set_time_limit(0);
 		$path_px_dir = $this->px->get_conf('paths.px_dir');
 		if( $item_info->get_category() == 'plugins' ){
 			if( !$this->px->dbh()->copy_all( $path_root_dir.'plugins/'.$item_info->get_item_name(), $path_px_dir.'plugins/'.$item_info->get_item_name() ) ){
@@ -275,12 +278,36 @@ class pxplugin_pxCollection_models_item extends px_bases_dao{
 				}
 			}
 		}
+		set_time_limit(30);
 
 		// 後処理
 		$this->px->dbh()->rm($path_tmp_dir);
 
 		return true;
 	}// install()
+
+	/**
+	 * アイテムのアンインストールを実行する
+	 */
+	public function uninstall(){
+		$item_info = $this;
+		if( !strlen($item_info->get_item_name()) ){
+			return false;
+		}
+
+		$obj = $this->px->get_plugin_object( 'pxCollection' );
+
+		// インストールを実行する
+		$path_px_dir = $this->px->get_conf('paths.px_dir');
+		if( $item_info->get_category() == 'plugins' || $item_info->get_category() == 'themes' ){
+			if( !$this->px->dbh()->rm( $path_px_dir.$item_info->get_category().'/'.$item_info->get_item_name() ) ){
+				$this->error($item_info->get_category().' '.$item_info->get_item_name().' のアンインストールに失敗しました。');
+				return false;
+			}
+		}
+
+		return true;
+	}// uninstall()
 
 	/**
 	 * 内部エラーを記録する

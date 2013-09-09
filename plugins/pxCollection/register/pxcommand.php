@@ -263,6 +263,8 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 	 * アイテムのインストール
 	 */
 	private function start_install( $category, $item_name ){
+		$this->set_title( $category.'「'.$item_name.'」をインストール' );//タイトルをセットする
+
 		$obj = $this->px->get_plugin_object( 'pxCollection' );
 		$model_collections = $obj->factory_model_collections();
 		$item_info = $model_collections->get_item_info( $category, $item_name );
@@ -424,27 +426,33 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 	 * アイテムのアンインストール
 	 */
 	private function start_uninstall( $category, $item_name ){
-		$error = $this->check_uninstall_check( $category, $item_name );
+		$this->set_title( $category.'「'.$item_name.'」をアンインストール' );//タイトルをセットする
+
+		$obj = $this->px->get_plugin_object( 'pxCollection' );
+		$model_collections = $obj->factory_model_collections();
+		$item_info = $model_collections->get_item_info( $category, $item_name );
+		$version_info = $item_info->get_current_version_info();
+
+		$error = $this->check_uninstall_check( $item_info, $version_info );
 		if( $this->px->req()->get_param('mode') == 'thanks' ){
-			return	$this->page_uninstall_thanks( $category, $item_name );
-		}elseif( $this->px->req()->get_param('mode') == 'confirm' && !count( $error ) ){
-			return	$this->page_uninstall_confirm( $category, $item_name );
+			return	$this->page_uninstall_thanks( $item_info, $version_info );
 		}elseif( $this->px->req()->get_param('mode') == 'execute' && !count( $error ) ){
-			return	$this->execute_uninstall_execute( $category, $item_name );
+			return	$this->execute_uninstall_execute( $item_info, $version_info );
 		}elseif( !strlen( $this->px->req()->get_param('mode') ) ){
 			$error = array();
 			// $this->px->req()->set_param( 'send_form_flg' , intval( $project_model->get_send_form_flg() ) );
 		}
-		return	$this->page_uninstall_input( $category, $item_name, $error );
+		return	$this->page_uninstall_input( $item_info, $version_info , $error );
 	}
 	/**
 	 * アイテムのアンインストール：入力
 	 */
-	private function page_uninstall_input( $category, $item_name, $error ){
+	private function page_uninstall_input( $item_info, $version_info , $error ){
 		$RTN = ''."\n";
 
 		$RTN .= '<p>'."\n";
-		$RTN .= '	プロジェクトの情報を入力して、「確認する」ボタンをクリックしてください。<span class="must">必須</span>印の項目は必ず入力してください。<br />'."\n";
+		$RTN .= '	'.t::h( $item_info->get_category() ).'「'.t::h( $item_info->get_item_name() ).'」をアンインストールします。<br />'."\n";
+		$RTN .= '	問題なければ、「アンインストールする」ボタンを押してください。<br />'."\n";
 		$RTN .= '</p>'."\n";
 		if( is_array( $error ) && count( $error ) ){
 			$RTN .= '<p class="error">'."\n";
@@ -452,96 +460,53 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 			$RTN .= '</p>'."\n";
 		}
 		$RTN .= '<form action="'.htmlspecialchars( $this->href() ).'" method="post" class="inline">'."\n";
-		$RTN .= '<table style="width:100%;" class="form_elements">'."\n";
-		$RTN .= '	<tr>'."\n";
-		$RTN .= '		<th style="width:30%;"><div>プロジェクト名 <span class="must">必須</span></div></th>'."\n";
-		$RTN .= '		<td style="width:70%;">'."\n";
-		$RTN .= '			<div><input type="text" name="project_name" value="'.htmlspecialchars( $this->px->req()->get_param('project_name') ).'" style="width:80%;" /></div>'."\n";
-		if( strlen( $error['project_name'] ) ){
-			$RTN .= '			<div class="error">'.$error['project_name'].'</div>'."\n";
-		}
-		$RTN .= '		</td>'."\n";
-		$RTN .= '	</tr>'."\n";
-		$RTN .= '</table>'."\n";
-		$RTN .= '	<div class="center"><input type="submit" value="確認する" /></div>'."\n";
-		$RTN .= '	<input type="hidden" name="mode" value="confirm" />'."\n";
-		$RTN .= '</form>'."\n";
-		return	$RTN;
-	}
-	/**
-	 * アイテムのアンインストール：確認
-	 */
-	private function page_uninstall_confirm( $category, $item_name ){
-		$command = $this->get_command();
-		$RTN = ''."\n";
-		$HIDDEN = ''."\n";
-
-		$RTN .= '<p>'."\n";
-		$RTN .= '	入力した内容を確認してください。<br />'."\n";
-		$RTN .= '</p>'."\n";
-
-		$RTN .= '<table style="width:100%;" class="form_elements">'."\n";
-		$RTN .= '	<tr>'."\n";
-		$RTN .= '		<th style="width:30%;"><div>プロジェクト名</div></th>'."\n";
-		$RTN .= '		<td style="width:70%;">'."\n";
-		$RTN .= '			<div>'.htmlspecialchars( $this->px->req()->get_param('project_name') ).'</div>'."\n";
-		$HIDDEN .= '<input type="hidden" name="project_name" value="'.htmlspecialchars( $this->px->req()->get_param('project_name') ).'" />';
-		$RTN .= '		</td>'."\n";
-		$RTN .= '	</tr>'."\n";
-		$RTN .= '</table>'."\n";
-
-		$RTN .= '<div class="unit">'."\n";
-		$RTN .= '<div class="center">'."\n";
-		$RTN .= '<form action="'.htmlspecialchars( $this->href() ).'" method="post" class="inline">'."\n";
+		$RTN .= '	<div class="center"><input type="submit" value="アンインストールする" /></div>'."\n";
 		$RTN .= '	<input type="hidden" name="mode" value="execute" />'."\n";
-		$RTN .= $HIDDEN;
-		$RTN .= '	'.''."\n";
-		$RTN .= '	<input type="submit" value="アンインストールする" />'."\n";
 		$RTN .= '</form>'."\n";
-		$RTN .= '<form action="'.htmlspecialchars( $this->href() ).'" method="post" class="inline">'."\n";
-		$RTN .= '	<input type="hidden" name="mode" value="input" />'."\n";
-		$RTN .= $HIDDEN;
-		$RTN .= '	'.''."\n";
-		$RTN .= '	<input type="submit" value="訂正する" />'."\n";
-		$RTN .= '</form>'."\n";
-		$RTN .= '</div>'."\n";
-		$RTN .= '</div>'."\n";
-		$RTN .= '<hr />'."\n";
-		$RTN .= '<div class="unit">'."\n";
-		$RTN .= '<form action="'.htmlspecialchars( $this->href(':'.$command[2].'.'.$command[3]) ).'" method="post" class="inline">'."\n";
-		$RTN .= '	<div class="center"><input type="submit" value="キャンセル" /></div>'."\n";
-		$RTN .= '</form>'."\n";
-		$RTN .= '</div>'."\n";
 		return	$RTN;
 	}
 	/**
 	 * アイテムのアンインストール：チェック
 	 */
-	private function check_uninstall_check( $category, $item_name ){
+	private function check_uninstall_check( $item_info, $version_info ){
 		$RTN = array();
-		if( !strlen( $this->px->req()->get_param('project_name') ) ){
-			$RTN['project_name'] = 'プロジェクト名は必須項目です。';
-		}elseif( preg_match( '/\r\n|\r|\n/' , $this->px->req()->get_param('project_name') ) ){
-			$RTN['project_name'] = 'プロジェクト名に改行を含めることはできません。';
-		}elseif( strlen( $this->px->req()->get_param('project_name') ) > 256 ){
-			$RTN['project_name'] = 'プロジェクト名が長すぎます。';
-		}
+		// if( !strlen( $this->px->req()->get_param('project_name') ) ){
+		// 	$RTN['project_name'] = 'プロジェクト名は必須項目です。';
+		// }elseif( preg_match( '/\r\n|\r|\n/' , $this->px->req()->get_param('project_name') ) ){
+		// 	$RTN['project_name'] = 'プロジェクト名に改行を含めることはできません。';
+		// }elseif( strlen( $this->px->req()->get_param('project_name') ) > 256 ){
+		// 	$RTN['project_name'] = 'プロジェクト名が長すぎます。';
+		// }
 		return	$RTN;
 	}
 	/**
 	 * アイテムのアンインストール：実行
 	 */
-	private function execute_uninstall_execute( $category, $item_name ){
+	private function execute_uninstall_execute( $item_info, $version_info ){
+		$result = $item_info->uninstall();
+		if( !$result ){
+			$rtn = '';
+			$rtn .= '<p>エラーが発生しました。</p>'."\n";
+			$errors = $item_info->get_error_report();
+			$rtn .= '<ul>'."\n";
+			foreach( $errors as $error ){
+				$rtn .= '<li>'.t::h( $error['message'] ).'</li>'."\n";
+			}
+			$rtn .= '</ul>'."\n";
+			return $rtn;
+		}
+
 
 		return $this->px->redirect( $this->href().'&mode=thanks' );
 	}
 	/**
 	 * アイテムのアンインストール：完了
 	 */
-	private function page_uninstall_thanks( $category, $item_name ){
+	private function page_uninstall_thanks( $item_info, $version_info ){
 		$command = $this->get_command();
 		$RTN = ''."\n";
 		$RTN .= '<p>アイテムのアンインストールを完了しました。</p>'."\n";
+		$RTN .= '<p>関連するライブラリ(libsディレクトリ)は、手動で削除するようにしてください。</p>'."\n";
 		$RTN .= '<form action="'.htmlspecialchars( $this->href( ':'.$command[2].'.'.$command[3] ) ).'" method="post" class="inline">'."\n";
 		$RTN .= '	<p><input type="submit" value="戻る" /></p>'."\n";
 		$RTN .= '</form>'."\n";
