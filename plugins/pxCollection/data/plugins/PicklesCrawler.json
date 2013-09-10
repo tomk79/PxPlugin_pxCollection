@@ -16,6 +16,13 @@
 	"versions":[
 		{
 			"type": "zip",
+			"md5_hash": "429d0c235124e435712052125212a6bb",
+			"url": "https://github.com/tomk79/PxPlugin_PicklesCrawler/archive/1.0.0b3.zip",
+			"version": "1.0.0b3",
+			"release_date": "2013-09-11"
+		} ,
+		{
+			"type": "zip",
 			"md5_hash": "68527ad0d641f0547ae4d9051c1dc678",
 			"url": "https://github.com/tomk79/PxPlugin_PicklesCrawler/archive/1.0.0b2.zip",
 			"version": "1.0.0b2",
@@ -29,5 +36,5 @@
 			"release_date": "2013-05-02"
 		}
 	] ,
-	"update_date": "2013-09-08"
+	"update_date": "2013-09-11"
 }
