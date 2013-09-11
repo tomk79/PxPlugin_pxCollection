@@ -219,6 +219,17 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 		$src .= '	</tbody>'."\n";
 		$src .= '</table><!-- /table.def -->'."\n";
 		$src .= ''."\n";
+		$src .= '<div class="unit">'."\n";
+		$src .= '<ul class="horizontal">'."\n";
+		if( !is_dir( $this->px->get_conf('paths.px_dir').$category.'/'.$item_name.'/' ) ){
+			$src .= '<li class="horizontal-li"><a href="'.t::h($this->href(':'.$category.'.'.$item_name.'.install')).'">インストール</a></li>'."\n";
+		}else{
+			$src .= '<li class="horizontal-li"><a href="'.t::h($this->href(':'.$category.'.'.$item_name.'.install')).'">アップデート</a></li>'."\n";
+			$src .= '<li class="horizontal-li"><a href="'.t::h($this->href(':'.$category.'.'.$item_name.'.uninstall')).'">アンインストール</a></li>'."\n";
+		}
+		$src .= '</ul>'."\n";
+		$src .= '</div>'."\n";
+
 		$src .= '<h2>バージョン</h2>'."\n";
 		$src .= '<div class="unit">'."\n";
 		$versions = $item_info->get_versions();
@@ -228,19 +239,12 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 			$src .= '	<dd><a href="'.t::h($version['url']).'">DOWNLOAD</a> ('.t::h($version['type']).')</dd>'."\n";
 			$src .= '	<dd>md5: '.t::h($version['md5_hash']).'</dd>'."\n";
 			$src .= '	<dd>release: '.t::h( date( 'Y年m月d日', $version['release_date'] ) ).'</dd>'."\n";
+			$src .= '	<dd><a href="'.t::h($this->href(':'.$category.'.'.$item_name.'.install?version_num='.$version['version'])).'">インストール</a></dd>'."\n";
 			$src .= '</dl>'."\n";
 		}
 		$src .= '</div>'."\n";
 
 		$src .= ''."\n";
-		$src .= '<ul class="horizontal">'."\n";
-		if( !is_dir( $this->px->get_conf('paths.px_dir').$category.'/'.$item_name.'/' ) ){
-			$src .= '<li class="horizontal-li"><a href="'.t::h($this->href(':'.$category.'.'.$item_name.'.install')).'">インストール</a></li>'."\n";
-		}else{
-			$src .= '<li class="horizontal-li"><a href="'.t::h($this->href(':'.$category.'.'.$item_name.'.install')).'">アップデート</a></li>'."\n";
-			$src .= '<li class="horizontal-li"><a href="'.t::h($this->href(':'.$category.'.'.$item_name.'.uninstall')).'">アンインストール</a></li>'."\n";
-		}
-		$src .= '</ul>'."\n";
 
 		$src .= '<hr />'."\n";
 		$src .= '<form action="'.t::h($this->href(':'.$category)).'" method="post" class="inline">'."\n";
@@ -268,7 +272,14 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 		$obj = $this->px->get_plugin_object( 'pxCollection' );
 		$model_collections = $obj->factory_model_collections();
 		$item_info = $model_collections->get_item_info( $category, $item_name );
-		$version_info = $item_info->get_current_version_info();
+		if( strlen( $this->px->req()->get_param('version_num') ) ){
+			$version_info = $item_info->get_version_info( $this->px->req()->get_param('version_num') );
+		}else{
+			$version_info = $item_info->get_current_version_info();
+		}
+		if( is_null($version_info) ){
+			return '<p class="error">'.t::h($item_name).' のバージョン '.t::h( $this->px->req()->get_param('version_num') ).' が見つかりません。</p>';
+		}
 
 		$error = $this->check_install_check( $item_info, $version_info );
 		if( $this->px->req()->get_param('mode') == 'thanks' ){
@@ -352,6 +363,7 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 		$RTN .= '	</ul>'."\n";
 		$RTN .= '</div><!-- /.form_buttons -->'."\n";
 		$RTN .= '	<input type="hidden" name="mode" value="execute" />'."\n";
+		$RTN .= '	<input type="hidden" name="version_num" value="'.t::h($this->px->req()->get_param('version_num')).'" />'."\n";
 		$RTN .= '</form>'."\n";
 
 		$RTN .= '<hr />'."\n";
@@ -431,7 +443,11 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 		$obj = $this->px->get_plugin_object( 'pxCollection' );
 		$model_collections = $obj->factory_model_collections();
 		$item_info = $model_collections->get_item_info( $category, $item_name );
-		$version_info = $item_info->get_current_version_info();
+		if( strlen( $this->px->req()->get_param('version_num') ) ){
+			$version_info = $item_info->get_version_info( $this->px->req()->get_param('version_num') );
+		}else{
+			$version_info = $item_info->get_current_version_info();
+		}
 
 		$error = $this->check_uninstall_check( $item_info, $version_info );
 		if( $this->px->req()->get_param('mode') == 'thanks' ){
@@ -462,6 +478,7 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 		$RTN .= '<form action="'.htmlspecialchars( $this->href() ).'" method="post" class="inline">'."\n";
 		$RTN .= '	<div class="center"><input type="submit" value="アンインストールする" /></div>'."\n";
 		$RTN .= '	<input type="hidden" name="mode" value="execute" />'."\n";
+		$RTN .= '	<input type="hidden" name="version_num" value="'.t::h($this->px->req()->get_param('version_num')).'" />'."\n";
 		$RTN .= '</form>'."\n";
 		return	$RTN;
 	}
@@ -527,7 +544,9 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 		if($linkto == ':'){
 			return '?PX=plugins.pxCollection';
 		}
-		$rtn = preg_replace('/^\:/','?PX=plugins.pxCollection.',$linkto);
+		preg_match( '/^(.*?)(?:\?(.*))?$/', $linkto, $matched );
+		$rtn = preg_replace('/^\:/','?PX=plugins.pxCollection.', $matched[1]);
+		$rtn .= (strlen($matched[2])?'&'.$matched[2]:'');
 
 		$rtn = $this->px->theme()->href( $rtn );
 		return $rtn;
