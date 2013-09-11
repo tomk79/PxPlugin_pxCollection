@@ -192,25 +192,30 @@ class pxplugin_pxCollection_models_item extends px_bases_dao{
 		}
 
 		// アーカイブをダウンロード
-		set_time_limit(0);
-		$httpaccess = $obj->factory_httpaccess();
-		$httpaccess->clear_request_header();//初期化
-		$httpaccess->set_url( $version_info['url'] );//ダウンロードするURL
-		$httpaccess->set_method( 'GET' );//メソッド
-		$httpaccess->set_user_agent( 'pxCollection/'.$obj->factory_info()->get_version().'(PicklesFramework)' );//HTTP_USER_AGENT
-		$httpaccess->save_http_contents( $path_dl_file );//ダウンロードを実行する
-		clearstatcache();
+		if( is_file($path_dl_file) ){
+			// すでにアーカイブがあったらダウンロードは省略
+		}else{
+			set_time_limit(0);
+			$httpaccess = $obj->factory_httpaccess();
+			$httpaccess->clear_request_header();//初期化
+			$httpaccess->set_url( $version_info['url'] );//ダウンロードするURL
+			$httpaccess->set_method( 'GET' );//メソッド
+			$httpaccess->set_user_agent( 'pxCollection/'.$obj->factory_info()->get_version().'(PicklesFramework)' );//HTTP_USER_AGENT
+			$httpaccess->save_http_contents( $path_dl_file );//ダウンロードを実行する
+			clearstatcache();
 
-		if( !is_file($path_dl_file) ){
-			$this->error('ダウンロードに失敗しました。');
-			return false;
-		}
+			if( !is_file($path_dl_file) ){
+				$this->error('ダウンロードに失敗しました。');
+				return false;
+			}
 
-		$result = $httpaccess->get_status_cd();
-		if( $result != 200 ){
-			$this->px->dbh()->rm($path_dl_file);
-			$this->error('ダウンロードに失敗しました。(status = '.$result.')');
-			return false;
+			$result = $httpaccess->get_status_cd();
+			if( $result != 200 ){
+				$this->px->dbh()->rm($path_dl_file);
+				$this->error('ダウンロードに失敗しました。(status = '.$result.')');
+				return false;
+			}
+
 		}
 
 		$md5_dlfile = md5_file($path_dl_file);
