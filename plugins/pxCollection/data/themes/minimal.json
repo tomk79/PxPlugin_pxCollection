@@ -1,0 +1,24 @@
+{
+	"name":"minimal",
+	"author":"@tomk79",
+	"description":"シンプルなテーマ。",
+	"url":"http://pickles.pxt.jp/manual/themes/",
+	"thumb": "data:base64",
+	"images":[
+		"data:base64"
+	],
+	"flags":{
+		"main_color": "white",
+		"pains": 2 
+	},
+	"versions":[
+		{
+			"type": "zip",
+			"md5_hash": "5488d99acc9df6f02991083c0b363768",
+			"url": "https://github.com/tomk79/PxTheme_minimal/archive/0.1.0b1.zip",
+			"version": "0.1.0b1",
+			"release_date": "2013-09-15"
+		}
+	] ,
+	"update_date": "2013-09-15"
+}

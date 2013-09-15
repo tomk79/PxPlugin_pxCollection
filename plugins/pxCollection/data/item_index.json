@@ -1,7 +1,6 @@
 {
 	"themes":[
-		"default",
-		"sample"
+		"minimal"
 	],
 	"plugins":[
 		"asazuke" ,
@@ -9,7 +8,5 @@
 		"sitemapExcel"
 	],
 	"contents":[
-		"contactform",
-		"newslist"
 	]
 }

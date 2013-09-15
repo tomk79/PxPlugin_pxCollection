@@ -270,6 +270,12 @@ class pxplugin_pxCollection_models_item extends px_bases_dao{
 				$this->error('プラグインのインストールに失敗しました。');
 				return false;
 			}
+		}elseif( $item_info->get_category() == 'themes' ){
+			if( !$this->px->dbh()->copy_all( $path_root_dir.'themes/'.$item_info->get_item_name(), $path_px_dir.'themes/'.$item_info->get_item_name() ) ){
+				$this->px->dbh()->rm($path_tmp_dir);
+				$this->error('テーマのインストールに失敗しました。');
+				return false;
+			}
 		}
 
 		// 同梱ライブラリをインストールする
