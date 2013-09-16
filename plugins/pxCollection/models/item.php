@@ -261,6 +261,15 @@ class pxplugin_pxCollection_models_item extends px_bases_dao{
 			return false;
 		}
 
+		// 一旦アンインストールする
+		if( $this->is_installed() ){
+			if( !$this->uninstall() ){
+				$this->px->dbh()->rm($path_tmp_dir);
+				$this->error('インストール前のアンインストールに失敗しました。');
+				return false;
+			}
+		}
+
 		// インストールを実行する
 		set_time_limit(0);
 		$path_px_dir = $this->px->get_conf('paths.px_dir');
@@ -319,6 +328,24 @@ class pxplugin_pxCollection_models_item extends px_bases_dao{
 
 		return true;
 	}// uninstall()
+
+	/**
+	 * インストール済みかどうか確認する。
+	 */
+	public function is_installed(){
+		$item_info = $this;
+		$path_root_dir = $this->px->get_conf('paths.px_dir');
+		if( $item_info->get_category() == 'plugins' ){
+			if( $this->px->dbh()->is_dir( $path_root_dir.'plugins/'.$item_info->get_item_name() ) ){
+				return true;
+			}
+		}elseif( $item_info->get_category() == 'themes' ){
+			if( $this->px->dbh()->is_dir( $path_root_dir.'themes/'.$item_info->get_item_name() ) ){
+				return true;
+			}
+		}
+		return false;
+	}//is_installed()
 
 	/**
 	 * 内部エラーを記録する
