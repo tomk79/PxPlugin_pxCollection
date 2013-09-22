@@ -74,9 +74,9 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 			foreach($list as $key){
 				$item_info = $model_collections->get_item_info('themes', $key);
 				$src .= '<dt><a href="'.t::h($this->href(':themes.'.$item_info->get_item_name())).'">'.t::h($item_info->get_item_name()).'</a></dt>'."\n";
+				$src .= '<dd><img src="'.t::h($item_info->get_thumb()).'" style="width:124px; height:124px;" /></dd>'."\n";
 				$src .= '<dd>author: '.t::h($item_info->get_author()).'</dd>'."\n";
 				$src .= '<dd>'.t::h($item_info->get_description()).'</dd>'."\n";
-				$src .= '<dd><a href="'.t::h($item_info->get_url()).'" target="_blank">more...</a></dd>'."\n";
 			}
 			$src .= '</dl>'."\n";
 		}
@@ -99,9 +99,9 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 			foreach($list as $key){
 				$item_info = $model_collections->get_item_info('plugins', $key);
 				$src .= '<dt><a href="'.t::h($this->href(':plugins.'.$item_info->get_item_name())).'">'.t::h($item_info->get_item_name()).'</a></dt>'."\n";
+				$src .= '<dd><img src="'.t::h($item_info->get_thumb()).'" style="width:124px; height:124px;" /></dd>'."\n";
 				$src .= '<dd>author: '.t::h($item_info->get_author()).'</dd>'."\n";
 				$src .= '<dd>'.t::h($item_info->get_description()).'</dd>'."\n";
-				$src .= '<dd><a href="'.t::h($item_info->get_url()).'" target="_blank">more...</a></dd>'."\n";
 			}
 			$src .= '</dl>'."\n";
 		}
@@ -123,10 +123,10 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 			$src .= '<dl>'."\n";
 			foreach($list as $key){
 				$item_info = $model_collections->get_item_info('contents', $key);
+				$src .= '<dd><img src="'.t::h($item_info->get_thumb()).'" style="width:124px; height:124px;" /></dd>'."\n";
 				$src .= '<dt><a href="'.t::h($this->href(':contents.'.$item_info->get_item_name())).'">'.t::h($item_info->get_item_name()).'</a></dt>'."\n";
 				$src .= '<dd>author: '.t::h($item_info->get_author()).'</dd>'."\n";
 				$src .= '<dd>'.t::h($item_info->get_description()).'</dd>'."\n";
-				$src .= '<dd><a href="'.t::h($item_info->get_url()).'" target="_blank">more...</a></dd>'."\n";
 			}
 			$src .= '</dl>'."\n";
 		}
@@ -149,8 +149,9 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 		$obj = $this->px->get_plugin_object( 'pxCollection' );
 		$model_collections = $obj->factory_model_collections();
 
+		$this->set_title('All "'.t::h($category).'"');
 		$src = '';
-		$src .= '<p>カテゴリ「'.t::h($category).'」の一覧ページは開発中です。</p>'."\n";
+		$src .= '<p>カテゴリ「'.t::h($category).'」の一覧ページです。</p>'."\n";
 		$src .= '<div class="unit">'."\n";
 		$list = $model_collections->get_list_of( $category );
 		if(!count($list)){
@@ -160,9 +161,9 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 			foreach($list as $key){
 				$item_info = $model_collections->get_item_info( $category, $key );
 				$src .= '<dt><a href="'.t::h($this->href(':'.$category.'.'.$item_info->get_item_name())).'">'.t::h($item_info->get_item_name()).'</a></dt>'."\n";
+				$src .= '<dd><img src="'.t::h($item_info->get_thumb()).'" alt="" style="width:124px; height:124px;" /></dd>'."\n";
 				$src .= '<dd>author: '.t::h($item_info->get_author()).'</dd>'."\n";
 				$src .= '<dd>'.t::h($item_info->get_description()).'</dd>'."\n";
-				$src .= '<dd><a href="'.t::h($item_info->get_url()).'" target="_blank">more...</a></dd>'."\n";
 			}
 			$src .= '</dl>'."\n";
 		}
@@ -201,16 +202,29 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 		$src .= '<table class="def" style="width:100%;">'."\n";
 		$src .= '	<tbody>'."\n";
 		$src .= '		<tr>'."\n";
-		$src .= '			<th>name</th>'."\n";
+		$src .= '			<th>種別</th>'."\n";
+		$src .= '			<td>'.t::h( $item_info->get_category() ).'</td>'."\n";
+		$src .= '		</tr>'."\n";
+		$src .= '		<tr>'."\n";
+		$src .= '			<th>アイテム名</th>'."\n";
 		$src .= '			<td>'.t::h( $item_info->get_item_name() ).'</td>'."\n";
 		$src .= '		</tr>'."\n";
 		$src .= '		<tr>'."\n";
-		$src .= '			<th>author</th>'."\n";
-		$src .= '			<td>'.t::h( $item_info->get_author() ).'</td>'."\n";
+		$src .= '			<th>サムネイル</th>'."\n";
+		$src .= '			<td><img src="'.t::h( $item_info->get_thumb() ).'" alt="" style="width:256px; height:256px;" /></td>'."\n";
 		$src .= '		</tr>'."\n";
 		$src .= '		<tr>'."\n";
-		$src .= '			<th>description</th>'."\n";
+		$src .= '			<th>説明</th>'."\n";
 		$src .= '			<td>'.t::text2html( $item_info->get_description() ).'</td>'."\n";
+		$src .= '		</tr>'."\n";
+		$src .= '		<tr>'."\n";
+		$src .= '			<th>URL</th>'."\n";
+		$tmp_url = $item_info->get_url();
+		$src .= '			<td><a href="'.t::text2html( $tmp_url ).'" target="_blank">'.t::text2html( $tmp_url ).'</a></td>'."\n";
+		$src .= '		</tr>'."\n";
+		$src .= '		<tr>'."\n";
+		$src .= '			<th>作者</th>'."\n";
+		$src .= '			<td>'.t::h( $item_info->get_author() ).'</td>'."\n";
 		$src .= '		</tr>'."\n";
 		$src .= '		<tr>'."\n";
 		$src .= '			<th>更新日</th>'."\n";
@@ -323,6 +337,10 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 		$RTN .= '		<td style="width:70%;">'."\n";
 		$RTN .= '			<div>'.t::h($item_info->get_item_name()).'</div>'."\n";
 		$RTN .= '		</td>'."\n";
+		$RTN .= '	</tr>'."\n";
+		$RTN .= '	<tr>'."\n";
+		$RTN .= '		<th>サムネイル</th>'."\n";
+		$RTN .= '		<td><img src="'.t::h( $item_info->get_thumb() ).'" alt="" style="width:256px; height:256px;" /></td>'."\n";
 		$RTN .= '	</tr>'."\n";
 		$RTN .= '	<tr>'."\n";
 		$RTN .= '		<th style="width:30%;"><div>説明</div></th>'."\n";

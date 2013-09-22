@@ -3,15 +3,10 @@
 	"author": "@tomk79",
 	"description":"ウェブ巡回収集ツール。",
 	"url":"http://pickles.pxt.jp/manual/themes/",
-	"thumb":"data:base64",
+	"thumb":"",
 	"images":[
-		"data:base64",
-		"data:base64",
-		"data:base64"
 	],
 	"flags":{
-		"main_color": "gray",
-		"pains": 2 
 	},
 	"versions":[
 		{
