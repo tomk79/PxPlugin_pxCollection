@@ -1,6 +1,8 @@
 {
 	"themes":[
-		"minimal"
+		"minimal",
+		"coloredPanel",
+		"test_for_bootstrap"
 	],
 	"plugins":[
 		"asazuke" ,

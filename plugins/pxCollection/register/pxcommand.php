@@ -70,15 +70,20 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 		if(!count($list)){
 			$src .= '<p>nothing.</p>'."\n";
 		}else{
-			$src .= '<dl>'."\n";
+			$src .= '<div class="unit thumb_list">'."\n";
+			$src .= '	<ul>'."\n";
 			foreach($list as $key){
 				$item_info = $model_collections->get_item_info('themes', $key);
-				$src .= '<dt><a href="'.t::h($this->href(':themes.'.$item_info->get_item_name())).'">'.t::h($item_info->get_item_name()).'</a></dt>'."\n";
-				$src .= '<dd><img src="'.t::h($item_info->get_thumb()).'" style="width:124px; height:124px;" /></dd>'."\n";
-				$src .= '<dd>author: '.t::h($item_info->get_author()).'</dd>'."\n";
-				$src .= '<dd>'.t::h($item_info->get_description()).'</dd>'."\n";
+				$src .= '		<li>';
+				$src .= '<div class="thumb_list-pad">';
+				$src .= '<a href="'.t::h($this->href(':themes.'.$item_info->get_item_name())).'"><img src="'.t::h($item_info->get_thumb()).'" alt="" /><span class="thumb_list-caption">'.t::h($item_info->get_item_name()).'</span></a>';
+				$src .= '<div>author: '.t::h($item_info->get_author()).'</div>'."\n";
+				$src .= '<div>'.t::h($item_info->get_description()).'</div>'."\n";
+				$src .= '</div>';
+				$src .= '</li>'."\n";
 			}
-			$src .= '</dl>'."\n";
+			$src .= '	</ul>'."\n";
+			$src .= '</div><!-- /.thumb_list -->'."\n";
 		}
 		$src .= '</div>'."\n";
 		$src .= '<div class="more_links">'."\n";
@@ -95,15 +100,20 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 		if(!count($list)){
 			$src .= '<p>nothing.</p>'."\n";
 		}else{
-			$src .= '<dl>'."\n";
+			$src .= '<div class="unit thumb_list">'."\n";
+			$src .= '	<ul>'."\n";
 			foreach($list as $key){
 				$item_info = $model_collections->get_item_info('plugins', $key);
-				$src .= '<dt><a href="'.t::h($this->href(':plugins.'.$item_info->get_item_name())).'">'.t::h($item_info->get_item_name()).'</a></dt>'."\n";
-				$src .= '<dd><img src="'.t::h($item_info->get_thumb()).'" style="width:124px; height:124px;" /></dd>'."\n";
-				$src .= '<dd>author: '.t::h($item_info->get_author()).'</dd>'."\n";
-				$src .= '<dd>'.t::h($item_info->get_description()).'</dd>'."\n";
+				$src .= '		<li>';
+				$src .= '<div class="thumb_list-pad">';
+				$src .= '<a href="'.t::h($this->href(':plugins.'.$item_info->get_item_name())).'"><img src="'.t::h($item_info->get_thumb()).'" alt="" /><span class="thumb_list-caption">'.t::h($item_info->get_item_name()).'</span></a>';
+				$src .= '<div>author: '.t::h($item_info->get_author()).'</div>'."\n";
+				$src .= '<div>'.t::h($item_info->get_description()).'</div>'."\n";
+				$src .= '</div>';
+				$src .= '</li>'."\n";
 			}
-			$src .= '</dl>'."\n";
+			$src .= '	</ul>'."\n";
+			$src .= '</div><!-- /.thumb_list -->'."\n";
 		}
 		$src .= '</div>'."\n";
 		$src .= '<div class="more_links">'."\n";
@@ -120,15 +130,20 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 		if(!count($list)){
 			$src .= '<p>nothing.</p>'."\n";
 		}else{
-			$src .= '<dl>'."\n";
+			$src .= '<div class="unit thumb_list">'."\n";
+			$src .= '	<ul>'."\n";
 			foreach($list as $key){
 				$item_info = $model_collections->get_item_info('contents', $key);
-				$src .= '<dd><img src="'.t::h($item_info->get_thumb()).'" style="width:124px; height:124px;" /></dd>'."\n";
-				$src .= '<dt><a href="'.t::h($this->href(':contents.'.$item_info->get_item_name())).'">'.t::h($item_info->get_item_name()).'</a></dt>'."\n";
-				$src .= '<dd>author: '.t::h($item_info->get_author()).'</dd>'."\n";
-				$src .= '<dd>'.t::h($item_info->get_description()).'</dd>'."\n";
+				$src .= '		<li>';
+				$src .= '<div class="thumb_list-pad">';
+				$src .= '<a href="'.t::h($this->href(':contents.'.$item_info->get_item_name())).'"><img src="'.t::h($item_info->get_thumb()).'" alt="" /><span class="thumb_list-caption">'.t::h($item_info->get_item_name()).'</span></a>';
+				$src .= '<div>author: '.t::h($item_info->get_author()).'</div>'."\n";
+				$src .= '<div>'.t::h($item_info->get_description()).'</div>'."\n";
+				$src .= '</div>';
+				$src .= '</li>'."\n";
 			}
-			$src .= '</dl>'."\n";
+			$src .= '	</ul>'."\n";
+			$src .= '</div><!-- /.thumb_list -->'."\n";
 		}
 		$src .= '</div>'."\n";
 		$src .= '<div class="more_links">'."\n";
@@ -157,15 +172,24 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 		if(!count($list)){
 			$src .= '<p>nothing.</p>'."\n";
 		}else{
-			$src .= '<dl>'."\n";
+			$src .= '<div class="unit thumb_list">'."\n";
+			$src .= '	<ul>'."\n";
 			foreach($list as $key){
 				$item_info = $model_collections->get_item_info( $category, $key );
-				$src .= '<dt><a href="'.t::h($this->href(':'.$category.'.'.$item_info->get_item_name())).'">'.t::h($item_info->get_item_name()).'</a></dt>'."\n";
-				$src .= '<dd><img src="'.t::h($item_info->get_thumb()).'" alt="" style="width:124px; height:124px;" /></dd>'."\n";
-				$src .= '<dd>author: '.t::h($item_info->get_author()).'</dd>'."\n";
-				$src .= '<dd>'.t::h($item_info->get_description()).'</dd>'."\n";
+				$src .= '		<li>';
+				$src .= '<div class="thumb_list-pad">';
+				$src .= '<a href="'.t::h($this->href(':'.$category.'.'.$item_info->get_item_name())).'"><img src="'.t::h($item_info->get_thumb()).'" alt="" /><span class="thumb_list-caption">'.t::h($item_info->get_item_name()).'</span></a>';
+				$src .= '<div>author: '.t::h($item_info->get_author()).'</div>'."\n";
+				$src .= '<div>'.t::h($item_info->get_description()).'</div>'."\n";
+				$src .= '</div>';
+				$src .= '</li>'."\n";
+				// $src .= '<dt><a href="'.t::h($this->href(':'.$category.'.'.$item_info->get_item_name())).'">'.t::h($item_info->get_item_name()).'</a></dt>'."\n";
+				// $src .= '<dd><img src="'.t::h($item_info->get_thumb()).'" alt="" style="width:124px; height:124px;" /></dd>'."\n";
+				// $src .= '<dd>author: '.t::h($item_info->get_author()).'</dd>'."\n";
+				// $src .= '<dd>'.t::h($item_info->get_description()).'</dd>'."\n";
 			}
-			$src .= '</dl>'."\n";
+			$src .= '	</ul>'."\n";
+			$src .= '</div><!-- /.thumb_list -->'."\n";
 		}
 		$src .= '</div>'."\n";
 
@@ -220,7 +244,7 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 		$src .= '		<tr>'."\n";
 		$src .= '			<th>URL</th>'."\n";
 		$tmp_url = $item_info->get_url();
-		$src .= '			<td><a href="'.t::text2html( $tmp_url ).'" target="_blank">'.t::text2html( $tmp_url ).'</a></td>'."\n";
+		$src .= '			<td style="word-break:break-all;"><a href="'.t::text2html( $tmp_url ).'" target="_blank">'.t::text2html( $tmp_url ).'</a></td>'."\n";
 		$src .= '		</tr>'."\n";
 		$src .= '		<tr>'."\n";
 		$src .= '			<th>作者</th>'."\n";
@@ -238,6 +262,9 @@ class pxplugin_pxCollection_register_pxcommand extends px_bases_pxcommand{
 		if( !is_dir( $this->px->get_conf('paths.px_dir').$category.'/'.$item_name.'/' ) ){
 			$src .= '<li class="horizontal-li"><a href="'.t::h($this->href(':'.$category.'.'.$item_name.'.install')).'">インストール</a></li>'."\n";
 		}else{
+			if( $category == 'themes' ){
+				$src .= '<li class="horizontal-li"><a href="?THEME='.t::h($item_name).'">このテーマを適用</a></li>'."\n";
+			}
 			$src .= '<li class="horizontal-li"><a href="'.t::h($this->href(':'.$category.'.'.$item_name.'.install')).'">アップデート</a></li>'."\n";
 			$src .= '<li class="horizontal-li"><a href="'.t::h($this->href(':'.$category.'.'.$item_name.'.uninstall')).'">アンインストール</a></li>'."\n";
 		}
