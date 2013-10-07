@@ -1,0 +1,21 @@
+{
+	"name":"coloredPanel",
+	"author":"@tomk79",
+	"description":"制作中。",
+	"url":"https://github.com/tomk79/PxTheme_coloredPanel",
+	"thumb": "",
+	"images":[
+	],
+	"flags":{
+	},
+	"versions":[
+		{
+			"type": "zip",
+			"md5_hash": "e9a9e0b381749a671bb475663d964bdc",
+			"url": "https://github.com/tomk79/PxTheme_coloredPanel/archive/0.1.0b1.zip",
+			"version": "0.1.0b1",
+			"release_date": "2013-09-24"
+		}
+	] ,
+	"update_date": "2013-09-24"
+}

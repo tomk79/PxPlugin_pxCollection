@@ -1,0 +1,21 @@
+{
+	"name":"test_for_bootstrap",
+	"author":"@tomk79",
+	"description":"Bootstrapを導入してみるテスト。",
+	"url":"https://github.com/tomk79/PxTheme_test_for_bootstrap",
+	"thumb": "",
+	"images":[
+	],
+	"flags":{
+	},
+	"versions":[
+		{
+			"type": "zip",
+			"md5_hash": "b0034634f4224385e143f72ae482f3d9",
+			"url": "https://github.com/tomk79/PxTheme_test_for_bootstrap/archive/0.1.0a1.zip",
+			"version": "0.1.0a1",
+			"release_date": "2013-09-30"
+		}
+	] ,
+	"update_date": "2013-09-30"
+}

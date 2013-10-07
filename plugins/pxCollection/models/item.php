@@ -8,7 +8,8 @@ class pxplugin_pxCollection_models_item extends px_bases_dao{
 
 	private $category = null;
 	private $item_name = null;
-	private $path_data_cache_dir = null;
+	private $path_data_cache_base_dir = null;
+	private $path_data_cache_item_dir = null;
 	private $data = null;
 	private $versions = null;
 	private $errors = array();
@@ -22,7 +23,7 @@ class pxplugin_pxCollection_models_item extends px_bases_dao{
 	public function __construct( $px, $category, $item_name ){
 		parent::__construct( $px );
 
-		$this->path_data_cache_dir = $this->px->get_plugin_object('pxCollection')->get_data_cache_dir();
+		$this->path_data_cache_base_dir = $this->px->get_plugin_object('pxCollection')->get_data_cache_dir();
 
 		switch($category){
 			case 'plugins':
@@ -41,15 +42,19 @@ class pxplugin_pxCollection_models_item extends px_bases_dao{
 
 		// [UTODO]一旦の仮実装。データベースの本体をどこに置くか未決定
 		if( !is_file($path_data_dir.'/db/'.$category.'/'.$item_name.'.json') ){
-			if( !is_dir($this->path_data_cache_dir.'db/') ){ $this->px->dbh()->mkdir_all( $this->path_data_cache_dir.'db/' ); }
-			if( !is_dir($this->path_data_cache_dir.'db/'.$category.'/') ){ $this->px->dbh()->mkdir_all( $this->path_data_cache_dir.'db/'.$category.'/' ); }
-			if( !$this->px->dbh()->copy( dirname(__FILE__).'/../data/'.$category.'/'.$item_name.'.json' , $this->path_data_cache_dir.'db/'.$category.'/'.$item_name.'.json' ) ){
+			if( !is_dir($this->path_data_cache_base_dir.'db/') ){ $this->px->dbh()->mkdir_all( $this->path_data_cache_base_dir.'db/' ); }
+			if( !is_dir($this->path_data_cache_base_dir.'db/'.$category.'/') ){ $this->px->dbh()->mkdir_all( $this->path_data_cache_base_dir.'db/'.$category.'/' ); }
+			if( !is_dir($this->path_data_cache_base_dir.'db/'.$category.'/'.$item_name.'/') ){ $this->px->dbh()->mkdir_all( $this->path_data_cache_base_dir.'db/'.$category.'/'.$item_name.'/' ); }
+			if( !$this->px->dbh()->copy( dirname(__FILE__).'/../data/'.$category.'/'.$item_name.'/info.json' , $this->path_data_cache_base_dir.'db/'.$category.'/'.$item_name.'/info.json' ) ){
 				return false;
+			}
+			if( $this->px->dbh()->is_file( dirname(__FILE__).'/../data/'.$category.'/'.$item_name.'/thumb.png') ){
+				$this->px->dbh()->copy( dirname(__FILE__).'/../data/'.$category.'/'.$item_name.'/thumb.png' , $this->path_data_cache_base_dir.'db/'.$category.'/'.$item_name.'/thumb.png' );
 			}
 		}
 		$this->category = $category;
 		$this->item_name = $item_name;
-		$this->data = @json_decode( $this->px->dbh()->file_get_contents( $this->path_data_cache_dir.'/db/'.$category.'/'.$item_name.'.json') );
+		$this->data = @json_decode( $this->px->dbh()->file_get_contents( $this->path_data_cache_base_dir.'/db/'.$category.'/'.$item_name.'/info.json') );
 
 		$this->versions = array();
 		foreach( $this->data->versions as $version ){
@@ -60,6 +65,8 @@ class pxplugin_pxCollection_models_item extends px_bases_dao{
 			$this->versions[$version->version]['url'] = $version->url;
 			$this->versions[$version->version]['release_date'] = $this->px->dbh()->datetime2int($version->release_date);
 		}
+
+		$this->path_data_cache_item_dir = $this->px->dbh()->get_realpath( $this->path_data_cache_base_dir.'db/'.$category.'/'.$item_name.'/' ).'/';
 
 	}
 
@@ -102,10 +109,16 @@ class pxplugin_pxCollection_models_item extends px_bases_dao{
 	 * サムネイルのURLを取得する
 	 */
 	public function get_thumb(){
-		if( !strlen($this->data->thumb) ){
-			return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAMAAABrrFhUAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNSBNYWNpbnRvc2giIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6QzA0NUFFRTAxQkExMTFFM0I1MzRGRkU1ODQ1Q0I2NzYiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6QzA0NUFFRTExQkExMTFFM0I1MzRGRkU1ODQ1Q0I2NzYiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo2NDIyNTA2MTFCOUUxMUUzQjUzNEZGRTU4NDVDQjY3NiIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo2NDIyNTA2MjFCOUUxMUUzQjUzNEZGRTU4NDVDQjY3NiIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PuqWEyYAAAAYUExURePj49XV1fLy8t3d3fr6+uzs7P///8nJyY+plrkAAALOSURBVHja7NiJitswEABQ3f7/P651ed11oFAo1O0TbMgaiXieNDNOwvGfjwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP5NgJjyfJPiulBLKzXe5+T5uanu29hrbtfWylbG3JzGiG8AaGW+afNuc6s55tTy/WPTnLmmHKXtG8mlXUHWvjJOrFBCH68AKHPPFkBcsaUSnwA1rKjTvpEayn77YcU7UqCFGfp8TWm71CdAmIel1gug5boW5BaPlwIcJV0A8Tr6tTwB4gyy5J35uV2Bp59CfhfAPPYjkK99vO/oDCecVHVGvaOt5/8rZ1p4L8BM3xHwGeR1/QFQjpEDZ9T73PfzUtP36WNubwLhLQAj4X8NkGaGnH9rg3O7jsqantpsFbML5LcAHL0OfgPInwB6DuRyHLsajn0eh38VjxinxMtSoCfB9yIYHkWwJ/55tef9cjr74jlWDb0awysBzsBXhd/d79kGe+nvnSBvgLVkttGra7wToFetFc08AqE9HmtGTSup7OTfpTCuHKivBjj2M23qj3YxfHgUHs98YUUbb6d+NsXcxjeEXQPiGC8CuIpeOL/RtJKfXf0W+nj9WtHW16rWR5nFdIzwAoBPJr+9c39gz/0eAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8HePHwIMAJuP9+SJOrnaAAAAAElFTkSuQmCC';
+		if( strlen( $this->data->thumb ) ){
+			// data値 の方が優先
+			return $this->data->thumb;
 		}
-		return $this->data->thumb;
+		if( is_file( $this->path_data_cache_item_dir.'thumb.png' ) ){
+			// サムネイル画像がアップされてればそれを採用
+			return 'data:image/png;base64,'.base64_encode( file_get_contents( $this->path_data_cache_item_dir.'thumb.png' ) );
+		}
+		// NO IMAGE 画像 を返す。
+		return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAMAAABrrFhUAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNSBNYWNpbnRvc2giIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6QzA0NUFFRTAxQkExMTFFM0I1MzRGRkU1ODQ1Q0I2NzYiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6QzA0NUFFRTExQkExMTFFM0I1MzRGRkU1ODQ1Q0I2NzYiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo2NDIyNTA2MTFCOUUxMUUzQjUzNEZGRTU4NDVDQjY3NiIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo2NDIyNTA2MjFCOUUxMUUzQjUzNEZGRTU4NDVDQjY3NiIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PuqWEyYAAAAYUExURePj49XV1fLy8t3d3fr6+uzs7P///8nJyY+plrkAAALOSURBVHja7NiJitswEABQ3f7/P651ed11oFAo1O0TbMgaiXieNDNOwvGfjwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP5NgJjyfJPiulBLKzXe5+T5uanu29hrbtfWylbG3JzGiG8AaGW+afNuc6s55tTy/WPTnLmmHKXtG8mlXUHWvjJOrFBCH68AKHPPFkBcsaUSnwA1rKjTvpEayn77YcU7UqCFGfp8TWm71CdAmIel1gug5boW5BaPlwIcJV0A8Tr6tTwB4gyy5J35uV2Bp59CfhfAPPYjkK99vO/oDCecVHVGvaOt5/8rZ1p4L8BM3xHwGeR1/QFQjpEDZ9T73PfzUtP36WNubwLhLQAj4X8NkGaGnH9rg3O7jsqantpsFbML5LcAHL0OfgPInwB6DuRyHLsajn0eh38VjxinxMtSoCfB9yIYHkWwJ/55tef9cjr74jlWDb0awysBzsBXhd/d79kGe+nvnSBvgLVkttGra7wToFetFc08AqE9HmtGTSup7OTfpTCuHKivBjj2M23qj3YxfHgUHs98YUUbb6d+NsXcxjeEXQPiGC8CuIpeOL/RtJKfXf0W+nj9WtHW16rWR5nFdIzwAoBPJr+9c39gz/0eAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8HePHwIMAJuP9+SJOrnaAAAAAElFTkSuQmCC';
 	}
 
 	/**

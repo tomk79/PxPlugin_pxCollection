@@ -1,0 +1,28 @@
+{
+	"name":"minimal",
+	"author":"@tomk79",
+	"description":"シンプルなテーマ。",
+	"url":"https://github.com/tomk79/PxTheme_minimal",
+	"thumb": "",
+	"images":[
+	],
+	"flags":{
+	},
+	"versions":[
+		{
+			"type": "zip",
+			"md5_hash": "e6affae5fa9be9e95f73f5a3dce7b005",
+			"url": "https://github.com/tomk79/PxTheme_minimal/archive/0.1.0b2.zip",
+			"version": "0.1.0b2",
+			"release_date": "2013-09-16"
+		} ,
+		{
+			"type": "zip",
+			"md5_hash": "5488d99acc9df6f02991083c0b363768",
+			"url": "https://github.com/tomk79/PxTheme_minimal/archive/0.1.0b1.zip",
+			"version": "0.1.0b1",
+			"release_date": "2013-09-15"
+		}
+	] ,
+	"update_date": "2013-09-16"
+}
